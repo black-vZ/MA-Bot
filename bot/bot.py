@@ -32,7 +32,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ─────────────────────────────────────────
-#        PERMISSION CHECK
+#        ADMIN STREITER CHECK
 # ─────────────────────────────────────────
 
 def is_admin_streiter():
@@ -40,7 +40,7 @@ def is_admin_streiter():
         role = discord.utils.get(interaction.user.roles, name=ADMIN_ROLE)
         if role is None:
             await interaction.response.send_message(
-                "You do not have permission to use this command.", ephemeral=True
+                "ما عندك صلاحية لاستخدام هذا الأمر.", ephemeral=True
             )
             return False
         return True
@@ -79,9 +79,10 @@ def create_welcome_image(member):
 
 async def send_welcome(channel, member):
     welcome_text = (
-        f"Welcome to MA Server, {member.mention}!\n"
-        f"Make sure to read the rules and introduce yourself.\n"
-        f"Check <#1453109203672498310> and <#1453095781790646393> to get started."
+        f"✨ أهلاً فيك بين أهلك!\n"
+        f"نورت سيرفر MA 🤍 لا تنسى تقرأ القوانين وتعرّف بنفسك {member.mention} 😉\n"
+        f"يُرجى منك إلقاء نظرة على <#1453109203672498310> <#1453095781790646393> "
+        f"لكي تعرف كل شيء يخص السيرفر"
     )
     image = create_welcome_image(member)
     if image:
@@ -484,48 +485,60 @@ async def on_ready():
     guild = discord.Object(id=GUILD_ID)
     bot.tree.copy_global_to(guild=guild)
     await bot.tree.sync(guild=guild)
-    print(f"Bot ready: {bot.user}")
+    print(f"✅ البوت شغال: {bot.user}")
+    print("✅ تم مزامنة الأوامر!")
 
-@bot.tree.command(name="setwelcome", description="Set the welcome channel for new members")
-@app_commands.describe(channel="The channel to send welcome messages in")
-@is_admin_streiter()
+@bot.tree.command(name="setwelcome", description="اختر قناة الترحيب للأعضاء الجدد")
+@app_commands.describe(channel="اختر القناة التي تريد إرسال رسائل الترحيب فيها")
+@app_commands.checks.has_permissions(administrator=True)
 async def setwelcome(interaction: discord.Interaction, channel: discord.TextChannel):
     config = load_config()
     config[str(interaction.guild_id)] = {"welcome_channel": channel.id}
     save_config(config)
-    await interaction.response.send_message(f"Welcome channel set to {channel.mention}.", ephemeral=True)
+    await interaction.response.send_message(
+        f"✅ تم تعيين قناة الترحيب إلى {channel.mention}!", ephemeral=True
+    )
 
-@bot.tree.command(name="testwelcome", description="Test the welcome message on yourself")
-@is_admin_streiter()
+@bot.tree.command(name="testwelcome", description="اختبر رسالة الترحيب على نفسك")
+@app_commands.checks.has_permissions(administrator=True)
 async def testwelcome(interaction: discord.Interaction):
     config = load_config()
     guild_id = str(interaction.guild_id)
     if guild_id not in config or "welcome_channel" not in config[guild_id]:
-        await interaction.response.send_message("No welcome channel set. Use `/setwelcome` first.", ephemeral=True)
+        await interaction.response.send_message(
+            "❌ ما تم تعيين قناة ترحيب بعد! استخدم `/setwelcome` أولاً.", ephemeral=True
+        )
         return
-    await interaction.response.send_message("Sending test message...", ephemeral=True)
+    await interaction.response.send_message("⏳ جاري إرسال رسالة الاختبار...", ephemeral=True)
     channel = bot.get_channel(config[guild_id]["welcome_channel"])
-    if channel:
+    if channel is None:
+        await interaction.followup.send("❌ ما أقدر أوصل للقناة!", ephemeral=True)
+        return
+    try:
         await send_welcome(channel, interaction.user)
+    except Exception as e:
+        await interaction.followup.send(f"❌ حصل خطأ: {e}", ephemeral=True)
 
-@bot.tree.command(name="setup_startup", description="Send the Start-Up room panel")
+@bot.tree.command(name="setup_startup", description="إرسال لوحة روم ستارت اب")
 @is_admin_streiter()
 async def setup_startup(interaction: discord.Interaction):
     channel = bot.get_channel(STARTUP_CHANNEL_ID)
     if channel is None:
-        await interaction.response.send_message("Cannot access the Start-Up channel.", ephemeral=True)
+        await interaction.response.send_message("❌ ما أقدر أوصل للروم!", ephemeral=True)
         return
     await channel.send(embed=get_main_embed(), view=StartupMainView())
-    await interaction.response.send_message("Start-Up panel sent.", ephemeral=True)
+    await interaction.response.send_message("✅ تم إرسال لوحة ستارت اب!", ephemeral=True)
 
-@bot.tree.command(name="setapps", description="Set the channel for receiving staff applications")
-@app_commands.describe(channel="The channel to receive applications in")
+@bot.tree.command(name="setapps", description="تعيين روم استقبال التقديمات")
+@app_commands.describe(channel="الروم الذي تريد إرسال التقديمات إليه")
 @is_admin_streiter()
 async def setapps(interaction: discord.Interaction, channel: discord.TextChannel):
     config = load_config()
     config["apps_channel"] = channel.id
     save_config(config)
-    await interaction.response.send_message(f"Applications channel set to {channel.mention}.", ephemeral=True)
+    await interaction.response.send_message(
+        f"✅ تم تعيين روم التقديمات إلى {channel.mention}!", ephemeral=True
+    )
 
 @bot.event
 async def on_member_join(member):
