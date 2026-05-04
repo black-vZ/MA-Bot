@@ -490,7 +490,7 @@ async def on_ready():
 
 @bot.tree.command(name="setwelcome", description="اختر قناة الترحيب للأعضاء الجدد")
 @app_commands.describe(channel="اختر القناة التي تريد إرسال رسائل الترحيب فيها")
-@app_commands.checks.has_permissions(administrator=True)
+@is_admin_streiter()
 async def setwelcome(interaction: discord.Interaction, channel: discord.TextChannel):
     config = load_config()
     config[str(interaction.guild_id)] = {"welcome_channel": channel.id}
@@ -500,7 +500,7 @@ async def setwelcome(interaction: discord.Interaction, channel: discord.TextChan
     )
 
 @bot.tree.command(name="testwelcome", description="اختبر رسالة الترحيب على نفسك")
-@app_commands.checks.has_permissions(administrator=True)
+@is_admin_streiter()
 async def testwelcome(interaction: discord.Interaction):
     config = load_config()
     guild_id = str(interaction.guild_id)
