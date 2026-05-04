@@ -13,7 +13,7 @@ BANNER_URL = "https://i.imgur.com/d7pvLfI.png"
 CONFIG_FILE = "bot/config.json"
 STARTUP_CHANNEL_ID = 1453095781790646393
 MA_COLOR = 0xE74C3C
-ADMIN_ROLE = "CEO Staff"
+ADMIN_ROLE_ID = 1474442320207417525
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -37,8 +37,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 def is_admin_streiter():
     async def predicate(interaction: discord.Interaction) -> bool:
-        role = discord.utils.get(interaction.user.roles, name=ADMIN_ROLE)
-        if role is None:
+        role_ids = [r.id for r in interaction.user.roles]
+        if ADMIN_ROLE_ID not in role_ids:
             await interaction.response.send_message(
                 "ما عندك صلاحية لاستخدام هذا الأمر.", ephemeral=True
             )
