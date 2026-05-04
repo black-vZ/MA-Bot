@@ -12,8 +12,8 @@ GUILD_ID = 1451263550948376608
 BANNER_URL = "https://i.imgur.com/d7pvLfI.png"
 CONFIG_FILE = "bot/config.json"
 STARTUP_CHANNEL_ID = 1453095781790646393
-APPS_CHANNEL_ID = 0  # سيتم تحديثه لاحقاً بـ ايدي روم التقديمات
 MA_COLOR = 0xE74C3C
+ADMIN_ROLE = "Admin Streiter"
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -32,7 +32,22 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # ─────────────────────────────────────────
-#          WELCOME IMAGE SYSTEM
+#        PERMISSION CHECK
+# ─────────────────────────────────────────
+
+def is_admin_streiter():
+    async def predicate(interaction: discord.Interaction) -> bool:
+        role = discord.utils.get(interaction.user.roles, name=ADMIN_ROLE)
+        if role is None:
+            await interaction.response.send_message(
+                "You do not have permission to use this command.", ephemeral=True
+            )
+            return False
+        return True
+    return app_commands.check(predicate)
+
+# ─────────────────────────────────────────
+#        WELCOME IMAGE SYSTEM
 # ─────────────────────────────────────────
 
 def create_welcome_image(member):
@@ -64,10 +79,9 @@ def create_welcome_image(member):
 
 async def send_welcome(channel, member):
     welcome_text = (
-        f"✨ أهلاً فيك بين أهلك!\n"
-        f"نورت سيرفر MA 🤍 لا تنسى تقرأ القوانين وتعرّف بنفسك {member.mention} 😉\n"
-        f"يُرجى منك إلقاء نظرة على <#1453109203672498310> <#1453095781790646393> "
-        f"لكي تعرف كل شيء يخص السيرفر"
+        f"Welcome to MA Server, {member.mention}!\n"
+        f"Make sure to read the rules and introduce yourself.\n"
+        f"Check <#1453109203672498310> and <#1453095781790646393> to get started."
     )
     image = create_welcome_image(member)
     if image:
@@ -77,7 +91,7 @@ async def send_welcome(channel, member):
         await channel.send(content=welcome_text)
 
 # ─────────────────────────────────────────
-#       START-UP ROOM — CONTENT
+#        STARTUP ROOM — CONTENT
 # ─────────────────────────────────────────
 
 NOTIFICATION_ROLES = [
@@ -88,151 +102,166 @@ NOTIFICATION_ROLES = [
 ]
 
 RULES_TEXT = (
-    "**1️⃣ الاحترام المتبادل**\n"
-    "يُلزم جميع الأعضاء باحترام بعضهم البعض بغض النظر عن الاختلافات. أي شكل من أشكال الإهانة أو الاستفزاز ممنوع.\n\n"
-    "**2️⃣ ممنوع التعدي على الآخرين**\n"
-    "يُمنع التحرش، والتنمر، والعنصرية، وأي سلوك يُسبب الأذى لأعضاء السيرفر.\n\n"
-    "**3️⃣ المحتوى المناسب فقط**\n"
-    "يُمنع نشر أي محتوى مسيء أو للبالغين أو مخالف لشروط خدمة Discord.\n\n"
-    "**4️⃣ ممنوع السبام والفلود**\n"
-    "يُمنع إرسال رسائل متكررة أو رموز تعبيرية مفرطة أو صور عشوائية خارج السياق.\n\n"
-    "**5️⃣ ممنوع الإعلانات**\n"
-    "يُمنع الترويج لأي سيرفر أو موقع أو منتج بدون إذن مسبق من الإدارة.\n\n"
-    "**6️⃣ احترام الأدوار والمهام**\n"
-    "يُرجى استخدام كل قناة للغرض المخصصة له، والتقيد بتوجيهات الطاقم الإداري.\n\n"
-    "**7️⃣ الخصوصية والأمان**\n"
-    "يُمنع مشاركة معلومات خاصة بالآخرين أو نشر روابط مشبوهة داخل السيرفر.\n\n"
-    "**8️⃣ الامتثال لشروط Discord**\n"
-    "يجب على جميع الأعضاء الالتزام بـ [شروط خدمة Discord](https://discord.com/terms) و[إرشادات المجتمع](https://discord.com/guidelines)."
+    "**I. Mutual Respect**\n"
+    "All members are required to treat each other with respect. "
+    "Insults, provocations, and personal attacks of any kind are strictly prohibited.\n\n"
+
+    "**II. No Harassment**\n"
+    "Harassment, bullying, racism, or any behavior that causes harm to other members "
+    "will result in an immediate ban.\n\n"
+
+    "**III. Appropriate Content Only**\n"
+    "Sharing offensive, adult, or Discord-ToS-violating content is not allowed "
+    "in any channel under any circumstances.\n\n"
+
+    "**IV. No Spam or Flooding**\n"
+    "Repeated messages, excessive reactions, or sending irrelevant media outside "
+    "of designated channels is prohibited.\n\n"
+
+    "**V. No Advertising**\n"
+    "Promoting other servers, websites, or products without prior approval from "
+    "the administration is not permitted.\n\n"
+
+    "**VI. Channel Discipline**\n"
+    "Each channel has a purpose — use it accordingly. "
+    "Follow staff instructions at all times.\n\n"
+
+    "**VII. Privacy & Security**\n"
+    "Sharing private information about others or posting suspicious links is strictly forbidden.\n\n"
+
+    "**VIII. Discord Guidelines**\n"
+    "All members must comply with [Discord Terms of Service](https://discord.com/terms) "
+    "and [Community Guidelines](https://discord.com/guidelines)."
 )
 
 INFO_PAGES = [
     {
-        "title": "🌟 مرحباً بك في سيرفر MA!",
+        "title": "Welcome to MA Server",
         "description": (
-            "يسعدنا انضمامك إلى مجتمع **MA** — المكان الذي نجمع فيه أشخاصاً طموحين من كل مكان.\n\n"
-            "سيرفرنا بُني على أساس الاحترام والمتعة والنمو المشترك، ونسعى دائماً لتقديم تجربة مميزة لكل عضو.\n\n"
-            "هذه الصفحات ستعرّفك على كل ما تحتاج معرفته للبدء. 👇"
+            "We're glad to have you here.\n\n"
+            "**MA** is a community built on respect, ambition, and genuine connection. "
+            "Whether you're here to socialize, find opportunities, or be part of something bigger — "
+            "you're in the right place.\n\n"
+            "Use the pages below to learn everything you need before getting started."
         )
     },
     {
-        "title": "📂 أقسام السيرفر",
+        "title": "Server Sections",
         "description": (
-            "**📣 الإعلانات** — أخبار ومستجدات السيرفر الرسمية\n\n"
-            "**💬 الدردشة العامة** — تحدث مع الأعضاء بحرية\n\n"
-            "**🚀 ستارت اب** — تعرّف على السيرفر وابدأ رحلتك\n\n"
-            "**💼 روم الأجر** — فرص العمل والمشاريع المدفوعة\n\n"
-            "**🎉 الفعاليات** — مسابقات وأنشطة ترفيهية\n\n"
-            "**🎮 الألعاب** — غرف للعب والمتعة مع الأعضاء"
+            "**Announcements** — Official server news and updates\n\n"
+            "**General Chat** — Open conversations with the community\n\n"
+            "**Start-Up** — Server guide for new members\n\n"
+            "**Ajr Room** — Job listings and paid collaboration opportunities\n\n"
+            "**Events** — Competitions, giveaways, and community activities\n\n"
+            "**Voice Channels** — Hang out and talk with members"
         )
     },
     {
-        "title": "🎭 نظام الرتب",
+        "title": "Staff Hierarchy",
         "description": (
-            "يعتمد سيرفر **MA** نظام رتب متدرجاً بناءً على نشاطك ومشاركتك:\n\n"
-            "**👋 عضو جديد** — عند الانضمام\n"
-            "**✅ عضو** — بعد قراءة القوانين والتفاعل\n"
-            "**⭐ عضو نشيط** — بالتفاعل المستمر\n"
-            "**💎 عضو مميز** — للأعضاء الأوفياء\n\n"
-            "**🛡️ رتب الطاقم:**\n"
-            "مشرف • مدير • مؤسس\n\n"
-            "للحصول على رتبة الطاقم، استخدم زر **التقديم** في هذا الروم."
+            "**Senior Management**\n"
+            "Owner — Co-Owner — Over Power — Higher — Admin Streiter\n\n"
+            "**Administration**\n"
+            "Manager — Helper — Voice Manager — Chat Manager — Girl Manager\n\n"
+            "**Moderation**\n"
+            "Mod — Senior Mod — Assistant — Trial Staff\n\n"
+            "To apply for a staff position, use the **Apply** button on the main panel."
         )
     },
     {
-        "title": "🎉 الفعاليات والمزايا",
+        "title": "Activities & Benefits",
         "description": (
-            "في سيرفر **MA** تجد الكثير من الأنشطة:\n\n"
-            "🏆 **مسابقات دورية** مع جوائز حقيقية\n\n"
-            "🎁 **قيف أواي** منتظمة للأعضاء النشيطين\n\n"
-            "🤝 **فرص عمل وتعاون** في روم الأجر\n\n"
-            "🎮 **جلسات ألعاب جماعية** مع الأعضاء\n\n"
-            "📢 **أحداث خاصة** يُعلن عنها في قناة الإعلانات\n\n"
-            "تابع **🔔 الإشعارات** لتكون أول من يعلم بكل جديد!"
+            "Being active in MA comes with real perks:\n\n"
+            "— Regular giveaways for active members\n"
+            "— Community events with prizes\n"
+            "— Job and collaboration opportunities in the Ajr Room\n"
+            "— Gaming sessions with other members\n"
+            "— Special announcements and early access to server updates\n\n"
+            "Enable **Notifications** to stay up to date."
         )
     },
     {
-        "title": "📌 نصائح للبداية الصحيحة",
+        "title": "Getting Started",
         "description": (
-            "إليك أهم الخطوات للاندماج في مجتمع **MA**:\n\n"
-            "**1️⃣** اقرأ **القوانين** بعناية للالتزام بها\n"
-            "**2️⃣** اختر **رتب الإشعارات** المناسبة لك\n"
-            "**3️⃣** عرّف بنفسك في قناة المقدمات\n"
-            "**4️⃣** تفاعل مع الأعضاء وكن جزءاً من المجتمع\n"
-            "**5️⃣** إذا أردت الانضمام للطاقم، استخدم زر **التقديم**\n\n"
-            "لو عندك أي سؤال، تواصل مع أي عضو من الطاقم بكل ترحيب! 🤍"
+            "Here's how to get the most out of MA:\n\n"
+            "1. Read the **Server Rules** carefully\n"
+            "2. Select your **Notification** preferences\n"
+            "3. Introduce yourself in the introductions channel\n"
+            "4. Engage with the community\n"
+            "5. If you're interested in joining the staff, use the **Apply** button\n\n"
+            "If you have any questions, feel free to reach out to any staff member."
         )
     }
 ]
 
 APPLY_TERMS = (
-    "قبل أن تتقدم، يرجى قراءة الشروط بعناية:\n\n"
-    "✅ يجب أن تكون عضواً نشطاً في السيرفر\n"
-    "✅ يجب أن يكون عمرك **+15 سنة** على الأقل\n"
-    "✅ يجب أن تكون متاحاً بشكل منتظم\n"
-    "✅ الصدق التام في الإجابة على جميع الأسئلة\n\n"
-    "❌ في حال رفض طلبك لن نُخبرك بالسبب\n"
-    "❌ عدم قبولك لا يعني عدم تقديرنا لك\n"
-    "❌ لا تتقدم إذا لم تكن جاداً\n\n"
-    "**بالضغط على 'أوافق على الشروط' فأنت تؤكد قراءتك وموافقتك على جميع ما سبق.**"
+    "Please read the following before submitting your application:\n\n"
+    "— You must be an active member of the server\n"
+    "— You must be at least 15 years old\n"
+    "— You must be regularly available\n"
+    "— All answers must be honest and accurate\n\n"
+    "— If your application is rejected, no reason will be provided\n"
+    "— Rejection does not reflect your value as a member\n"
+    "— Do not apply unless you are serious about the commitment\n\n"
+    "By clicking **I Agree**, you confirm that you have read and accept all of the above."
 )
 
 # ─────────────────────────────────────────
-#       START-UP ROOM — MODALS
+#        STARTUP ROOM — MODALS
 # ─────────────────────────────────────────
 
-class StaffApplyModal(discord.ui.Modal, title="📝 تقديم للطاقم الإداري"):
-    q1 = discord.ui.TextInput(label="ما اسمك وكم عمرك؟", placeholder="الاسم والعمر...", max_length=100)
-    q2 = discord.ui.TextInput(label="لماذا تريد الانضمام للطاقم؟", style=discord.TextStyle.paragraph, max_length=400)
-    q3 = discord.ui.TextInput(label="ما خبرتك في الإدارة؟", style=discord.TextStyle.paragraph, max_length=400)
-    q4 = discord.ui.TextInput(label="كم ساعة يومياً تستطيع التواجد؟", max_length=100)
+class StaffApplyModal(discord.ui.Modal, title="Staff Application — Administration"):
+    q1 = discord.ui.TextInput(label="Your name and age", placeholder="Name, Age", max_length=100)
+    q2 = discord.ui.TextInput(label="Why do you want to join the staff?", style=discord.TextStyle.paragraph, max_length=500)
+    q3 = discord.ui.TextInput(label="Previous experience in administration?", style=discord.TextStyle.paragraph, max_length=500)
+    q4 = discord.ui.TextInput(label="How many hours per day are you available?", max_length=100)
 
     async def on_submit(self, interaction: discord.Interaction):
-        await send_application(interaction, "🛡️ تقديم للطاقم الإداري", [
-            ("الاسم والعمر", self.q1.value),
-            ("سبب الانضمام", self.q2.value),
-            ("الخبرة في الإدارة", self.q3.value),
-            ("ساعات التواجد", self.q4.value),
+        await send_application(interaction, "Staff Application — Administration", [
+            ("Name & Age", self.q1.value),
+            ("Reason for Applying", self.q2.value),
+            ("Previous Experience", self.q3.value),
+            ("Daily Availability", self.q4.value),
         ])
 
-class EventApplyModal(discord.ui.Modal, title="📝 تقديم لفريق الفعاليات"):
-    q1 = discord.ui.TextInput(label="ما اسمك وكم عمرك؟", placeholder="الاسم والعمر...", max_length=100)
-    q2 = discord.ui.TextInput(label="ما نوع الفعاليات التي تستطيع تنظيمها؟", style=discord.TextStyle.paragraph, max_length=400)
-    q3 = discord.ui.TextInput(label="هل لديك خبرة سابقة في تنظيم الفعاليات؟", style=discord.TextStyle.paragraph, max_length=400)
-    q4 = discord.ui.TextInput(label="ما الذي يميزك عن غيرك؟", style=discord.TextStyle.paragraph, max_length=300)
+class EventApplyModal(discord.ui.Modal, title="Staff Application — Events Team"):
+    q1 = discord.ui.TextInput(label="Your name and age", placeholder="Name, Age", max_length=100)
+    q2 = discord.ui.TextInput(label="What types of events can you organize?", style=discord.TextStyle.paragraph, max_length=500)
+    q3 = discord.ui.TextInput(label="Do you have prior experience in events?", style=discord.TextStyle.paragraph, max_length=500)
+    q4 = discord.ui.TextInput(label="What makes you stand out?", style=discord.TextStyle.paragraph, max_length=400)
 
     async def on_submit(self, interaction: discord.Interaction):
-        await send_application(interaction, "🎉 تقديم لفريق الفعاليات", [
-            ("الاسم والعمر", self.q1.value),
-            ("أنواع الفعاليات", self.q2.value),
-            ("الخبرة السابقة", self.q3.value),
-            ("ما يميزه", self.q4.value),
+        await send_application(interaction, "Staff Application — Events Team", [
+            ("Name & Age", self.q1.value),
+            ("Event Types", self.q2.value),
+            ("Prior Experience", self.q3.value),
+            ("What Sets You Apart", self.q4.value),
         ])
 
-class ModApplyModal(discord.ui.Modal, title="📝 تقديم للإشراف"):
-    q1 = discord.ui.TextInput(label="ما اسمك وكم عمرك؟", placeholder="الاسم والعمر...", max_length=100)
-    q2 = discord.ui.TextInput(label="لماذا تريد أن تكون مشرفاً؟", style=discord.TextStyle.paragraph, max_length=400)
-    q3 = discord.ui.TextInput(label="كيف تتعامل مع الأعضاء المخالفين؟", style=discord.TextStyle.paragraph, max_length=400)
-    q4 = discord.ui.TextInput(label="كم ساعة يومياً أنت متاح؟", max_length=100)
+class ModApplyModal(discord.ui.Modal, title="Staff Application — Moderation"):
+    q1 = discord.ui.TextInput(label="Your name and age", placeholder="Name, Age", max_length=100)
+    q2 = discord.ui.TextInput(label="Why do you want to be a moderator?", style=discord.TextStyle.paragraph, max_length=500)
+    q3 = discord.ui.TextInput(label="How do you handle rule violations?", style=discord.TextStyle.paragraph, max_length=500)
+    q4 = discord.ui.TextInput(label="How many hours per day are you available?", max_length=100)
 
     async def on_submit(self, interaction: discord.Interaction):
-        await send_application(interaction, "🔨 تقديم للإشراف", [
-            ("الاسم والعمر", self.q1.value),
-            ("سبب الرغبة في الإشراف", self.q2.value),
-            ("التعامل مع المخالفين", self.q3.value),
-            ("ساعات التواجد", self.q4.value),
+        await send_application(interaction, "Staff Application — Moderation", [
+            ("Name & Age", self.q1.value),
+            ("Reason for Applying", self.q2.value),
+            ("Handling Violations", self.q3.value),
+            ("Daily Availability", self.q4.value),
         ])
 
 async def send_application(interaction: discord.Interaction, title: str, fields: list):
     config = load_config()
-    apps_channel_id = config.get("apps_channel", APPS_CHANNEL_ID)
+    apps_channel_id = config.get("apps_channel")
     channel = bot.get_channel(int(apps_channel_id)) if apps_channel_id else None
 
     embed = discord.Embed(title=title, color=MA_COLOR)
     for name, value in fields:
         embed.add_field(name=name, value=value or "—", inline=False)
     embed.set_footer(
-        text=f"مقدم من {interaction.user.display_name} ({interaction.user.id}) • MA Server",
+        text=f"Submitted by {interaction.user.display_name} ({interaction.user.id}) — MA Server",
         icon_url=interaction.user.display_avatar.url
     )
     embed.timestamp = discord.utils.utcnow()
@@ -240,50 +269,49 @@ async def send_application(interaction: discord.Interaction, title: str, fields:
     if channel:
         await channel.send(embed=embed)
         await interaction.response.send_message(
-            "✅ تم إرسال تقديمك بنجاح! سنتواصل معك قريباً. 🤍", ephemeral=True
+            "Your application has been submitted. We will be in touch.", ephemeral=True
         )
     else:
         await interaction.response.send_message(
-            "✅ تم استلام تقديمك! سنتواصل معك قريباً. 🤍\n"
-            "*(ملاحظة للإدارة: لم يتم تعيين روم التقديمات بعد — استخدم `/setapps`)*",
+            "Your application has been received. We will be in touch.\n"
+            "*(Admin note: applications channel not set — use `/setapps`)*",
             ephemeral=True
         )
 
 # ─────────────────────────────────────────
-#       START-UP ROOM — VIEWS
+#        STARTUP ROOM — VIEWS
 # ─────────────────────────────────────────
 
 def get_info_embed(page: int) -> discord.Embed:
     info = INFO_PAGES[page]
     embed = discord.Embed(title=info["title"], description=info["description"], color=MA_COLOR)
-    embed.set_footer(text=f"MA Server • الصفحة {page + 1} من {len(INFO_PAGES)}")
+    embed.set_footer(text=f"MA Server  •  Page {page + 1} of {len(INFO_PAGES)}")
     return embed
 
 def get_main_embed() -> discord.Embed:
     embed = discord.Embed(
-        title="🌟 أهلاً وسهلاً في سيرفر MA!",
+        title="Welcome to MA Server",
         description=(
-            "يسعدنا انضمامك! هذا الروم سيعرّفك على كل شيء تحتاج معرفته.\n\n"
-            "استخدم الأزرار أدناه للتنقل:\n\n"
-            "📋 **قوانين السيرفر** — اقرأها قبل أي شيء\n"
-            "ℹ️ **معلومات السيرفر** — تعرّف على أقسامنا ونظامنا\n"
-            "🔔 **الإشعارات** — اختر ما تريد استقباله\n"
-            "📝 **التقديم** — انضم لطاقم MA"
+            "This channel will walk you through everything you need to know.\n\n"
+            "**Server Rules** — Read before anything else\n"
+            "**Server Info** — Learn about our sections, ranks, and how things work\n"
+            "**Notifications** — Choose what you want to receive\n"
+            "**Apply** — Join the MA staff team"
         ),
         color=MA_COLOR
     )
-    embed.set_footer(text="MA Server • رحلة سعيدة معنا 🤍")
+    embed.set_footer(text="MA Server  •  Enjoy your stay")
     return embed
 
 def get_roles_embed(note: str = "") -> discord.Embed:
     desc = (
-        "اختر الإشعارات التي تريد استقبالها من سيرفر **MA**.\n\n"
-        "🔄 اضغط على الزر مرة ثانية لإلغاء الرتبة."
+        "Select the notifications you'd like to receive from MA Server.\n\n"
+        "Press the same button again to remove a role."
     )
     if note:
         desc += f"\n\n{note}"
-    embed = discord.Embed(title="🔔 رتب الإشعارات | MA", description=desc, color=MA_COLOR)
-    embed.set_footer(text="MA Server • يمكنك تغيير اختياراتك في أي وقت")
+    embed = discord.Embed(title="Notification Roles", description=desc, color=MA_COLOR)
+    embed.set_footer(text="MA Server  •  You can update your preferences at any time")
     return embed
 
 
@@ -295,16 +323,16 @@ class InfoNavView(discord.ui.View):
         self.next_btn.disabled = (page == len(INFO_PAGES) - 1)
         self.page_indicator.label = f"{page + 1} / {len(INFO_PAGES)}"
 
-    @discord.ui.button(label="◀️", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary)
     async def prev_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         new_page = self.page - 1
         await interaction.response.edit_message(embed=get_info_embed(new_page), view=InfoNavView(new_page))
 
-    @discord.ui.button(label="1 / 5", style=discord.ButtonStyle.gray, disabled=True)
+    @discord.ui.button(label="1 / 5", style=discord.ButtonStyle.secondary, disabled=True)
     async def page_indicator(self, interaction: discord.Interaction, button: discord.ui.Button):
         pass
 
-    @discord.ui.button(label="▶️", style=discord.ButtonStyle.primary)
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary)
     async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         new_page = self.page + 1
         await interaction.response.edit_message(embed=get_info_embed(new_page), view=InfoNavView(new_page))
@@ -318,70 +346,70 @@ class RolesView(discord.ui.View):
         role = discord.utils.get(interaction.guild.roles, name=role_name)
         if role is None:
             await interaction.response.edit_message(
-                embed=get_roles_embed(f"❌ الرتبة **{role_name}** غير موجودة! تواصل مع الإدارة."), view=self
+                embed=get_roles_embed(f"Role **{role_name}** not found. Contact an admin."), view=self
             )
             return
         if role in interaction.user.roles:
             await interaction.user.remove_roles(role)
-            note = f"🔕 تم إزالة رتبة **{role_name}**"
+            note = f"Removed **{role_name}**"
         else:
             await interaction.user.add_roles(role)
-            note = f"🔔 تم إضافة رتبة **{role_name}**"
+            note = f"Added **{role_name}**"
         await interaction.response.edit_message(embed=get_roles_embed(note), view=self)
 
-    @discord.ui.button(label="🔔 Server Notifications", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="Server Notifications", style=discord.ButtonStyle.secondary, row=0)
     async def server_notif(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self._toggle(interaction, "Server Notifications")
 
-    @discord.ui.button(label="💼 Ajr Notifications", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="Ajr Notifications", style=discord.ButtonStyle.secondary, row=0)
     async def ajr_notif(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self._toggle(interaction, "Ajr Notifications")
 
-    @discord.ui.button(label="🎉 Events Notifications", style=discord.ButtonStyle.secondary, row=1)
+    @discord.ui.button(label="Events Notifications", style=discord.ButtonStyle.secondary, row=1)
     async def events_notif(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self._toggle(interaction, "Events Notifications")
 
-    @discord.ui.button(label="🎮 Games Notifications", style=discord.ButtonStyle.secondary, row=1)
+    @discord.ui.button(label="Games Notifications", style=discord.ButtonStyle.secondary, row=1)
     async def games_notif(self, interaction: discord.Interaction, button: discord.ui.Button):
         await self._toggle(interaction, "Games Notifications")
 
-    @discord.ui.button(label="✅ أضف كل الرتب", style=discord.ButtonStyle.success, row=2)
+    @discord.ui.button(label="Add All", style=discord.ButtonStyle.secondary, row=2)
     async def add_all(self, interaction: discord.Interaction, button: discord.ui.Button):
         roles = [discord.utils.get(interaction.guild.roles, name=r) for r in NOTIFICATION_ROLES]
         roles = [r for r in roles if r]
         if roles:
             await interaction.user.add_roles(*roles)
-        await interaction.response.edit_message(embed=get_roles_embed("✅ تم إضافة جميع رتب الإشعارات!"), view=self)
+        await interaction.response.edit_message(embed=get_roles_embed("All notification roles added."), view=self)
 
-    @discord.ui.button(label="❌ احذف كل الرتب", style=discord.ButtonStyle.danger, row=2)
+    @discord.ui.button(label="Remove All", style=discord.ButtonStyle.danger, row=2)
     async def remove_all(self, interaction: discord.Interaction, button: discord.ui.Button):
         roles = [discord.utils.get(interaction.guild.roles, name=r) for r in NOTIFICATION_ROLES]
         roles = [r for r in roles if r]
         if roles:
             await interaction.user.remove_roles(*roles)
-        await interaction.response.edit_message(embed=get_roles_embed("✅ تم إزالة جميع رتب الإشعارات!"), view=self)
+        await interaction.response.edit_message(embed=get_roles_embed("All notification roles removed."), view=self)
 
 
 class ApplyTypeView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=300)
 
-    @discord.ui.button(label="🛡️ طاقم إداري", style=discord.ButtonStyle.primary, row=0)
+    @discord.ui.button(label="Administration", style=discord.ButtonStyle.secondary, row=0)
     async def staff_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(title="📋 شروط التقديم للطاقم الإداري", description=APPLY_TERMS, color=MA_COLOR)
-        embed.set_footer(text="MA Server • اقرأ الشروط بعناية قبل التقديم")
+        embed = discord.Embed(title="Application Terms — Administration", description=APPLY_TERMS, color=MA_COLOR)
+        embed.set_footer(text="MA Server  •  Read carefully before proceeding")
         await interaction.response.edit_message(embed=embed, view=ApplyTermsView("staff"))
 
-    @discord.ui.button(label="🎉 فريق الفعاليات", style=discord.ButtonStyle.success, row=0)
+    @discord.ui.button(label="Events Team", style=discord.ButtonStyle.secondary, row=0)
     async def event_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(title="📋 شروط التقديم لفريق الفعاليات", description=APPLY_TERMS, color=MA_COLOR)
-        embed.set_footer(text="MA Server • اقرأ الشروط بعناية قبل التقديم")
+        embed = discord.Embed(title="Application Terms — Events Team", description=APPLY_TERMS, color=MA_COLOR)
+        embed.set_footer(text="MA Server  •  Read carefully before proceeding")
         await interaction.response.edit_message(embed=embed, view=ApplyTermsView("event"))
 
-    @discord.ui.button(label="🔨 إشراف", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="Moderation", style=discord.ButtonStyle.secondary, row=0)
     async def mod_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(title="📋 شروط التقديم للإشراف", description=APPLY_TERMS, color=MA_COLOR)
-        embed.set_footer(text="MA Server • اقرأ الشروط بعناية قبل التقديم")
+        embed = discord.Embed(title="Application Terms — Moderation", description=APPLY_TERMS, color=MA_COLOR)
+        embed.set_footer(text="MA Server  •  Read carefully before proceeding")
         await interaction.response.edit_message(embed=embed, view=ApplyTermsView("mod"))
 
 
@@ -390,7 +418,7 @@ class ApplyTermsView(discord.ui.View):
         super().__init__(timeout=300)
         self.apply_type = apply_type
 
-    @discord.ui.button(label="✅ أوافق على الشروط", style=discord.ButtonStyle.success)
+    @discord.ui.button(label="I Agree", style=discord.ButtonStyle.secondary)
     async def agree_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if self.apply_type == "staff":
             await interaction.response.send_modal(StaffApplyModal())
@@ -399,16 +427,15 @@ class ApplyTermsView(discord.ui.View):
         elif self.apply_type == "mod":
             await interaction.response.send_modal(ModApplyModal())
 
-    @discord.ui.button(label="◀️ رجوع", style=discord.ButtonStyle.secondary)
+    @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary)
     async def back_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
-            title="📝 التقديم في سيرفر MA",
+            title="Staff Applications — MA Server",
             description=(
-                "أهلاً بك في قسم التقديمات!\n\n"
-                "اختر الوظيفة التي تريد التقديم عليها:\n\n"
-                "🛡️ **طاقم إداري** — إدارة السيرفر والإشراف العام\n"
-                "🎉 **فريق الفعاليات** — تنظيم وإدارة فعاليات السيرفر\n"
-                "🔨 **إشراف** — الإشراف على المحادثات وتطبيق القوانين"
+                "Select the position you'd like to apply for:\n\n"
+                "**Administration** — General server management\n"
+                "**Events Team** — Planning and running server events\n"
+                "**Moderation** — Enforcing rules and maintaining order"
             ),
             color=MA_COLOR
         )
@@ -419,41 +446,36 @@ class StartupMainView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
 
-    @discord.ui.button(label="📋 قوانين السيرفر", style=discord.ButtonStyle.danger, custom_id="ma_main_rules_v2")
+    @discord.ui.button(label="Server Rules", style=discord.ButtonStyle.danger, custom_id="ma_rules_v3")
     async def rules_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="📋 قوانين سيرفر MA",
-            description=RULES_TEXT,
-            color=MA_COLOR
-        )
-        embed.set_footer(text="MA Server • الالتزام بالقوانين واجب على الجميع")
+        embed = discord.Embed(title="MA Server — Rules", description=RULES_TEXT, color=MA_COLOR)
+        embed.set_footer(text="MA Server  •  Compliance is mandatory for all members")
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-    @discord.ui.button(label="ℹ️ معلومات السيرفر", style=discord.ButtonStyle.primary, custom_id="ma_main_info_v2")
+    @discord.ui.button(label="Server Info", style=discord.ButtonStyle.secondary, custom_id="ma_info_v3")
     async def info_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(embed=get_info_embed(0), view=InfoNavView(0), ephemeral=True)
 
-    @discord.ui.button(label="🔔 الإشعارات", style=discord.ButtonStyle.secondary, custom_id="ma_main_roles_v2")
+    @discord.ui.button(label="Notifications", style=discord.ButtonStyle.secondary, custom_id="ma_roles_v3")
     async def roles_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.send_message(embed=get_roles_embed(), view=RolesView(), ephemeral=True)
 
-    @discord.ui.button(label="📝 التقديم", style=discord.ButtonStyle.success, custom_id="ma_main_apply_v2")
+    @discord.ui.button(label="Apply", style=discord.ButtonStyle.secondary, custom_id="ma_apply_v3")
     async def apply_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(
-            title="📝 التقديم في سيرفر MA",
+            title="Staff Applications — MA Server",
             description=(
-                "أهلاً بك في قسم التقديمات!\n\n"
-                "اختر الوظيفة التي تريد التقديم عليها:\n\n"
-                "🛡️ **طاقم إداري** — إدارة السيرفر والإشراف العام\n"
-                "🎉 **فريق الفعاليات** — تنظيم وإدارة فعاليات السيرفر\n"
-                "🔨 **إشراف** — الإشراف على المحادثات وتطبيق القوانين"
+                "Select the position you'd like to apply for:\n\n"
+                "**Administration** — General server management\n"
+                "**Events Team** — Planning and running server events\n"
+                "**Moderation** — Enforcing rules and maintaining order"
             ),
             color=MA_COLOR
         )
         await interaction.response.send_message(embed=embed, view=ApplyTypeView(), ephemeral=True)
 
 # ─────────────────────────────────────────
-#       BOT EVENTS & COMMANDS
+#        BOT EVENTS & COMMANDS
 # ─────────────────────────────────────────
 
 @bot.event
@@ -463,48 +485,47 @@ async def on_ready():
     bot.tree.copy_global_to(guild=guild)
     await bot.tree.sync(guild=guild)
     print(f"Bot ready: {bot.user}")
-    print("Commands synced!")
 
-@bot.tree.command(name="setwelcome", description="اختر قناة الترحيب للأعضاء الجدد")
-@app_commands.describe(channel="اختر القناة التي تريد إرسال رسائل الترحيب فيها")
-@app_commands.checks.has_permissions(administrator=True)
+@bot.tree.command(name="setwelcome", description="Set the welcome channel for new members")
+@app_commands.describe(channel="The channel to send welcome messages in")
+@is_admin_streiter()
 async def setwelcome(interaction: discord.Interaction, channel: discord.TextChannel):
     config = load_config()
     config[str(interaction.guild_id)] = {"welcome_channel": channel.id}
     save_config(config)
-    await interaction.response.send_message(f"✅ تم تعيين قناة الترحيب إلى {channel.mention}!", ephemeral=True)
+    await interaction.response.send_message(f"Welcome channel set to {channel.mention}.", ephemeral=True)
 
-@bot.tree.command(name="testwelcome", description="اختبر رسالة الترحيب على نفسك")
-@app_commands.checks.has_permissions(administrator=True)
+@bot.tree.command(name="testwelcome", description="Test the welcome message on yourself")
+@is_admin_streiter()
 async def testwelcome(interaction: discord.Interaction):
     config = load_config()
     guild_id = str(interaction.guild_id)
     if guild_id not in config or "welcome_channel" not in config[guild_id]:
-        await interaction.response.send_message("❌ استخدم `/setwelcome` أولاً.", ephemeral=True)
+        await interaction.response.send_message("No welcome channel set. Use `/setwelcome` first.", ephemeral=True)
         return
-    await interaction.response.send_message("⏳ جاري الإرسال...", ephemeral=True)
+    await interaction.response.send_message("Sending test message...", ephemeral=True)
     channel = bot.get_channel(config[guild_id]["welcome_channel"])
     if channel:
         await send_welcome(channel, interaction.user)
 
-@bot.tree.command(name="setup_startup", description="إرسال لوحة روم ستارت اب")
-@app_commands.checks.has_permissions(administrator=True)
+@bot.tree.command(name="setup_startup", description="Send the Start-Up room panel")
+@is_admin_streiter()
 async def setup_startup(interaction: discord.Interaction):
     channel = bot.get_channel(STARTUP_CHANNEL_ID)
     if channel is None:
-        await interaction.response.send_message("❌ ما أقدر أوصل للروم!", ephemeral=True)
+        await interaction.response.send_message("Cannot access the Start-Up channel.", ephemeral=True)
         return
     await channel.send(embed=get_main_embed(), view=StartupMainView())
-    await interaction.response.send_message("✅ تم إرسال لوحة ستارت اب!", ephemeral=True)
+    await interaction.response.send_message("Start-Up panel sent.", ephemeral=True)
 
-@bot.tree.command(name="setapps", description="تعيين روم استقبال التقديمات")
-@app_commands.describe(channel="الروم الذي تريد إرسال التقديمات إليه")
-@app_commands.checks.has_permissions(administrator=True)
+@bot.tree.command(name="setapps", description="Set the channel for receiving staff applications")
+@app_commands.describe(channel="The channel to receive applications in")
+@is_admin_streiter()
 async def setapps(interaction: discord.Interaction, channel: discord.TextChannel):
     config = load_config()
     config["apps_channel"] = channel.id
     save_config(config)
-    await interaction.response.send_message(f"✅ تم تعيين روم التقديمات إلى {channel.mention}!", ephemeral=True)
+    await interaction.response.send_message(f"Applications channel set to {channel.mention}.", ephemeral=True)
 
 @bot.event
 async def on_member_join(member):
