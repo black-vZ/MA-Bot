@@ -13,7 +13,7 @@ BANNER_URL = "https://i.imgur.com/d7pvLfI.png"
 CONFIG_FILE = "bot/config.json"
 STARTUP_CHANNEL_ID = 1453095781790646393
 MA_COLOR = 0xE74C3C
-ADMIN_ROLE = "Admin Streiter"
+ADMIN_ROLE = "CEO Staff"
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
