@@ -1,19 +1,44 @@
 import discord
 from discord import app_commands
-from discord.ext import commands
+from discord.ext import commands, tasks
 from PIL import Image, ImageDraw
 import requests
 from io import BytesIO
 import os
 import json
+import random
 
 TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
 GUILD_ID = 1451263550948376608
 BANNER_URL = "https://i.imgur.com/d7pvLfI.png"
 CONFIG_FILE = "bot/config.json"
 STARTUP_CHANNEL_ID = 1453095781790646393
+AJR_CHANNEL_ID = 1452763016495108297
 MA_COLOR = 0xE74C3C
 ADMIN_ROLE_ID = 1474442320207417525
+
+AJR_MESSAGES = [
+    "قال رسول الله ﷺ: «مَن قال سبحان الله وبحمده في يوم مئة مرة، حُطَّت خطاياه وإن كانت مثل زبد البحر»\n— متفق عليه",
+    "قال رسول الله ﷺ: «كلمتان خفيفتان على اللسان، ثقيلتان في الميزان، حبيبتان إلى الرحمن: سبحان الله وبحمده، سبحان الله العظيم»\n— متفق عليه",
+    "قال رسول الله ﷺ: «مَن قرأ آية الكرسي دبر كل صلاة مكتوبة لم يمنعه من دخول الجنة إلا أن يموت»\n— صحيح النسائي",
+    "قال الله تعالى: ﴿فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ﴾\n— سورة البقرة: 152",
+    "قال رسول الله ﷺ: «مَن صلى على واحدة صلى الله عليه بها عشراً»\n— صحيح مسلم",
+    "قال رسول الله ﷺ: «أحب الأعمال إلى الله أدومها وإن قَلَّ»\n— متفق عليه",
+    "قال الله تعالى: ﴿إِنَّ اللَّهَ مَعَ الصَّابِرِينَ﴾\n— سورة البقرة: 153",
+    "قال رسول الله ﷺ: «مَن قال لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير، في يوم مئة مرة، كانت له عدل عشر رقاب»\n— متفق عليه",
+    "قال رسول الله ﷺ: «الطهور شطر الإيمان، والحمد لله تملأ الميزان، وسبحان الله والحمد لله تملآن ما بين السماوات والأرض»\n— صحيح مسلم",
+    "قال الله تعالى: ﴿وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا ۝ وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ﴾\n— سورة الطلاق: 2-3",
+    "قال رسول الله ﷺ: «مَن سلك طريقاً يلتمس فيه علماً سهَّل الله له به طريقاً إلى الجنة»\n— صحيح مسلم",
+    "قال رسول الله ﷺ: «إن من أحبكم إليّ وأقربكم مني مجلساً يوم القيامة أحاسنَكم أخلاقاً»\n— صحيح الترمذي",
+    "قال الله تعالى: ﴿وَقُل رَّبِّ زِدْنِي عِلْمًا﴾\n— سورة طه: 114",
+    "قال رسول الله ﷺ: «أفضل الذكر لا إله إلا الله، وأفضل الدعاء الحمد لله»\n— صحيح الترمذي",
+    "قال رسول الله ﷺ: «البر حسن الخلق، والإثم ما حاك في صدرك وكرهت أن يطلع عليه الناس»\n— صحيح مسلم",
+    "قال الله تعالى: ﴿وَاللَّهُ يُحِبُّ الصَّابِرِينَ﴾\n— سورة آل عمران: 146",
+    "قال رسول الله ﷺ: «ما من مسلم يغرس غرساً أو يزرع زرعاً فيأكل منه طير أو إنسان أو بهيمة إلا كان له به صدقة»\n— متفق عليه",
+    "قال رسول الله ﷺ: «لا يؤمن أحدكم حتى يحب لأخيه ما يحب لنفسه»\n— متفق عليه",
+    "قال الله تعالى: ﴿إِنَّ مَعَ الْعُسْرِ يُسْرًا﴾\n— سورة الشرح: 6",
+    "قال رسول الله ﷺ: «رحم الله رجلاً سمحاً إذا باع وإذا اشترى وإذا اقتضى»\n— صحيح البخاري",
+]
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -479,6 +504,28 @@ class StartupMainView(discord.ui.View):
         await interaction.response.send_message(embed=embed, view=ApplyTypeView(), ephemeral=True)
 
 # ─────────────────────────────────────────
+#        AJR ROOM — DAILY TASK
+# ─────────────────────────────────────────
+
+@tasks.loop(hours=24)
+async def send_ajr_message():
+    channel = bot.get_channel(AJR_CHANNEL_ID)
+    if channel is None:
+        return
+    guild = bot.get_guild(GUILD_ID)
+    if guild is None:
+        return
+    ajr_role = discord.utils.get(guild.roles, name="Ajr Notifications")
+    mention = ajr_role.mention if ajr_role else ""
+    message = random.choice(AJR_MESSAGES)
+    embed = discord.Embed(
+        description=f"✨  {message}",
+        color=MA_COLOR
+    )
+    embed.set_footer(text="MA Server  •  أجر يومي")
+    await channel.send(content=mention, embed=embed)
+
+# ─────────────────────────────────────────
 #        BOT EVENTS & COMMANDS
 # ─────────────────────────────────────────
 
@@ -488,6 +535,8 @@ async def on_ready():
     guild = discord.Object(id=GUILD_ID)
     bot.tree.copy_global_to(guild=guild)
     await bot.tree.sync(guild=guild)
+    if not send_ajr_message.is_running():
+        send_ajr_message.start()
     print(f"✅ البوت شغال: {bot.user}")
     print("✅ تم مزامنة الأوامر!")
 
