@@ -161,11 +161,14 @@ INFO_PAGES = [
         "title": "Staff Hierarchy",
         "description": (
             "**Senior Management**\n"
-            "Owner — Co-Owner — Over Power — Higher — Admin Streiter\n\n"
-            "**Administration**\n"
-            "Manager — Helper — Voice Manager — Chat Manager — Girl Manager\n\n"
+            "👑 Owner — ⚡️ Co-Owner — 💻 Developer — ⚙️ Over Powered — ⚔️ The Heir — 🔧 Administrator\n\n"
             "**Moderation**\n"
-            "Mod — Senior Mod — Assistant — Trial Staff\n\n"
+            "🔮 Manager — 🌸 Girl Staff — 💬 Chat Manager — 👁 Voice Manager\n"
+            "🛡️ Senior Mod — ⚔️ Mod — 🗡️ Helper — 🔫 Assistant — 📙 Trial Staff\n\n"
+            "**Event Team**\n"
+            "🎉 Event Team\n\n"
+            "**Division**\n"
+            "Division Helper\n\n"
             "To apply for a staff position, use the **Apply** button on the main panel."
         )
     },
@@ -211,46 +214,46 @@ APPLY_TERMS = (
 #        STARTUP ROOM — MODALS
 # ─────────────────────────────────────────
 
-class StaffApplyModal(discord.ui.Modal, title="Staff Application — Administration"):
+class ModeratorApplyModal(discord.ui.Modal, title="Staff Application — Moderator"):
     q1 = discord.ui.TextInput(label="Your name and age", placeholder="Name, Age", max_length=100)
-    q2 = discord.ui.TextInput(label="Why do you want to join the staff?", style=discord.TextStyle.paragraph, max_length=500)
-    q3 = discord.ui.TextInput(label="Previous experience in administration?", style=discord.TextStyle.paragraph, max_length=500)
+    q2 = discord.ui.TextInput(label="Why do you want to be a Moderator?", style=discord.TextStyle.paragraph, max_length=500)
+    q3 = discord.ui.TextInput(label="How do you handle rule violations?", style=discord.TextStyle.paragraph, max_length=500)
     q4 = discord.ui.TextInput(label="How many hours per day are you available?", max_length=100)
 
     async def on_submit(self, interaction: discord.Interaction):
-        await send_application(interaction, "Staff Application — Administration", [
+        await send_application(interaction, "Staff Application — Moderator", [
             ("Name & Age", self.q1.value),
             ("Reason for Applying", self.q2.value),
-            ("Previous Experience", self.q3.value),
+            ("Handling Violations", self.q3.value),
             ("Daily Availability", self.q4.value),
         ])
 
-class EventApplyModal(discord.ui.Modal, title="Staff Application — Events Team"):
+class DivisionHelperApplyModal(discord.ui.Modal, title="Staff Application — Division Helper"):
+    q1 = discord.ui.TextInput(label="Your name and age", placeholder="Name, Age", max_length=100)
+    q2 = discord.ui.TextInput(label="Why do you want to be a Division Helper?", style=discord.TextStyle.paragraph, max_length=500)
+    q3 = discord.ui.TextInput(label="What skills can you bring to the team?", style=discord.TextStyle.paragraph, max_length=500)
+    q4 = discord.ui.TextInput(label="How many hours per day are you available?", max_length=100)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await send_application(interaction, "Staff Application — Division Helper", [
+            ("Name & Age", self.q1.value),
+            ("Reason for Applying", self.q2.value),
+            ("Skills & Strengths", self.q3.value),
+            ("Daily Availability", self.q4.value),
+        ])
+
+class EventTeamApplyModal(discord.ui.Modal, title="Staff Application — Event Team"):
     q1 = discord.ui.TextInput(label="Your name and age", placeholder="Name, Age", max_length=100)
     q2 = discord.ui.TextInput(label="What types of events can you organize?", style=discord.TextStyle.paragraph, max_length=500)
     q3 = discord.ui.TextInput(label="Do you have prior experience in events?", style=discord.TextStyle.paragraph, max_length=500)
     q4 = discord.ui.TextInput(label="What makes you stand out?", style=discord.TextStyle.paragraph, max_length=400)
 
     async def on_submit(self, interaction: discord.Interaction):
-        await send_application(interaction, "Staff Application — Events Team", [
+        await send_application(interaction, "Staff Application — Event Team", [
             ("Name & Age", self.q1.value),
             ("Event Types", self.q2.value),
             ("Prior Experience", self.q3.value),
             ("What Sets You Apart", self.q4.value),
-        ])
-
-class ModApplyModal(discord.ui.Modal, title="Staff Application — Moderation"):
-    q1 = discord.ui.TextInput(label="Your name and age", placeholder="Name, Age", max_length=100)
-    q2 = discord.ui.TextInput(label="Why do you want to be a moderator?", style=discord.TextStyle.paragraph, max_length=500)
-    q3 = discord.ui.TextInput(label="How do you handle rule violations?", style=discord.TextStyle.paragraph, max_length=500)
-    q4 = discord.ui.TextInput(label="How many hours per day are you available?", max_length=100)
-
-    async def on_submit(self, interaction: discord.Interaction):
-        await send_application(interaction, "Staff Application — Moderation", [
-            ("Name & Age", self.q1.value),
-            ("Reason for Applying", self.q2.value),
-            ("Handling Violations", self.q3.value),
-            ("Daily Availability", self.q4.value),
         ])
 
 async def send_application(interaction: discord.Interaction, title: str, fields: list):
@@ -395,23 +398,23 @@ class ApplyTypeView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=300)
 
-    @discord.ui.button(label="Administration", style=discord.ButtonStyle.secondary, row=0)
-    async def staff_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(title="Application Terms — Administration", description=APPLY_TERMS, color=MA_COLOR)
-        embed.set_footer(text="MA Server  •  Read carefully before proceeding")
-        await interaction.response.edit_message(embed=embed, view=ApplyTermsView("staff"))
-
-    @discord.ui.button(label="Events Team", style=discord.ButtonStyle.secondary, row=0)
-    async def event_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(title="Application Terms — Events Team", description=APPLY_TERMS, color=MA_COLOR)
-        embed.set_footer(text="MA Server  •  Read carefully before proceeding")
-        await interaction.response.edit_message(embed=embed, view=ApplyTermsView("event"))
-
     @discord.ui.button(label="Moderation", style=discord.ButtonStyle.secondary, row=0)
     async def mod_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         embed = discord.Embed(title="Application Terms — Moderation", description=APPLY_TERMS, color=MA_COLOR)
         embed.set_footer(text="MA Server  •  Read carefully before proceeding")
         await interaction.response.edit_message(embed=embed, view=ApplyTermsView("mod"))
+
+    @discord.ui.button(label="Event Team", style=discord.ButtonStyle.secondary, row=0)
+    async def event_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="Application Terms — Event Team", description=APPLY_TERMS, color=MA_COLOR)
+        embed.set_footer(text="MA Server  •  Read carefully before proceeding")
+        await interaction.response.edit_message(embed=embed, view=ApplyTermsView("event"))
+
+    @discord.ui.button(label="Division Helper", style=discord.ButtonStyle.secondary, row=0)
+    async def division_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(title="Application Terms — Division Helper", description=APPLY_TERMS, color=MA_COLOR)
+        embed.set_footer(text="MA Server  •  Read carefully before proceeding")
+        await interaction.response.edit_message(embed=embed, view=ApplyTermsView("division"))
 
 
 class ApplyTermsView(discord.ui.View):
@@ -421,12 +424,12 @@ class ApplyTermsView(discord.ui.View):
 
     @discord.ui.button(label="I Agree", style=discord.ButtonStyle.secondary)
     async def agree_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if self.apply_type == "staff":
-            await interaction.response.send_modal(StaffApplyModal())
+        if self.apply_type == "mod":
+            await interaction.response.send_modal(ModeratorApplyModal())
         elif self.apply_type == "event":
-            await interaction.response.send_modal(EventApplyModal())
-        elif self.apply_type == "mod":
-            await interaction.response.send_modal(ModApplyModal())
+            await interaction.response.send_modal(EventTeamApplyModal())
+        elif self.apply_type == "division":
+            await interaction.response.send_modal(DivisionHelperApplyModal())
 
     @discord.ui.button(label="Back", style=discord.ButtonStyle.secondary)
     async def back_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -434,9 +437,9 @@ class ApplyTermsView(discord.ui.View):
             title="Staff Applications — MA Server",
             description=(
                 "Select the position you'd like to apply for:\n\n"
-                "**Administration** — General server management\n"
-                "**Events Team** — Planning and running server events\n"
-                "**Moderation** — Enforcing rules and maintaining order"
+                "**Moderation** — Moderating the server and enforcing rules\n"
+                "**Event Team** — Planning and running server events\n"
+                "**Division Helper** — Supporting the division team"
             ),
             color=MA_COLOR
         )
