@@ -620,16 +620,20 @@ VOICE_CHANNEL_IDS = [
 ]
 
 YTDL_OPTIONS = {
-    "format": "bestaudio/best",
+    "format": "bestaudio[acodec!=none]/bestaudio/best[acodec!=none]/best",
     "quiet": True,
     "no_warnings": True,
     "default_search": "ytsearch",
     "noplaylist": True,
+    "source_address": "0.0.0.0",
+    "ignoreerrors": False,
+    "logtostderr": False,
+    "geo_bypass": True,
 }
 
 FFMPEG_OPTIONS = {
-    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-    "options": "-vn",
+    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -nostdin",
+    "options": "-vn -ar 48000 -ac 2",
 }
 
 import yt_dlp
