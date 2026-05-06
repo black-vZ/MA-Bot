@@ -606,4 +606,93 @@ async def on_member_join(member):
     except Exception as e:
         print(f"Error in on_member_join: {e}")
 
+# ─────────────────────────────────────────
+#        MUSIC SYSTEM
+# ─────────────────────────────────────────
+
+VOICE_CHANNEL_IDS = [
+    1457530594845261824, 1457529937459417198, 1457529742038270253,
+    1457529798724423720, 1457530475416653984, 1457529470805086371,
+    1457530043210141789, 1457529373509816658, 1457529977149853908,
+    1457530528260686010, 1457529696593117225, 1457530328473276426,
+    1457530670493601814, 1457530221128323246, 1457530384362377257,
+    1457530751414440098, 1478548895352230070
+]
+
+YTDL_OPTIONS = {
+    "format": "bestaudio/best",
+    "quiet": True,
+    "no_warnings": True,
+    "default_search": "ytsearch",
+    "noplaylist": True,
+}
+
+FFMPEG_OPTIONS = {
+    "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+    "options": "-vn",
+}
+
+import yt_dlp
+
+music_volume = {}
+
+async def get_audio_source(query: str, volume: float = 0.5):
+    with yt_dlp.YoutubeDL(YTDL_OPTIONS) as ydl:
+        info = ydl.extract_info(query if query.startswith("http") else f"ytsearch:{query}", download=False)
+        if "entries" in info:
+            info = info["entries"][0]
+        url = info["url"]
+        title = info.get("title", "Unknown")
+    source = discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS)
+    return discord.PCMVolumeTransformer(source, volume=volume), title
+
+@bot.command(name="ص")
+async def play(ctx, *, query: str):
+    if not ctx.author.voice or ctx.author.voice.channel is None:
+        await ctx.send("❌ أنت مش في روم صوت!")
+        return
+    vc_channel = ctx.author.voice.channel
+    if vc_channel.id not in VOICE_CHANNEL_IDS:
+        await ctx.send("❌ هذا الروم مو مدعوم.")
+        return
+    vol = music_volume.get(ctx.guild.id, 50) / 100
+    msg = await ctx.send("🔍 جاري البحث...")
+    try:
+        source, title = await get_audio_source(query, vol)
+    except Exception as e:
+        await msg.edit(content=f"❌ ما أقدر أشغل الأغنية: {e}")
+        return
+    vc = ctx.voice_client
+    if vc is None:
+        vc = await vc_channel.connect()
+        await ctx.guild.me.edit(nick=vc_channel.name)
+    elif vc.channel != vc_channel:
+        await vc.move_to(vc_channel)
+        await ctx.guild.me.edit(nick=vc_channel.name)
+    if vc.is_playing():
+        vc.stop()
+    vc.play(source)
+    await msg.edit(content=f"🎵 يشتغل الحين: **{title}**")
+
+@bot.command(name="س")
+async def volume(ctx, level: int):
+    if level < 0 or level > 100:
+        await ctx.send("❌ الصوت لازم يكون بين 0 و 100.")
+        return
+    music_volume[ctx.guild.id] = level
+    vc = ctx.voice_client
+    if vc and vc.source:
+        vc.source.volume = level / 100
+    await ctx.send(f"🔊 تم ضبط الصوت على **{level}**")
+
+@bot.command(name="ق")
+async def stop(ctx):
+    vc = ctx.voice_client
+    if vc:
+        await vc.disconnect()
+        await ctx.guild.me.edit(nick=None)
+        await ctx.send("⏹️ تم إيقاف الموسيقى.")
+    else:
+        await ctx.send("❌ البوت مو في روم صوت.")
+
 bot.run(TOKEN)
