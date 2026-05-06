@@ -620,15 +620,14 @@ VOICE_CHANNEL_IDS = [
 ]
 
 YTDL_OPTIONS = {
-    "format": "bestaudio[acodec!=none]/bestaudio/best[acodec!=none]/best",
+    "format": "bestaudio",
     "quiet": True,
     "no_warnings": True,
     "default_search": "ytsearch",
     "noplaylist": True,
     "source_address": "0.0.0.0",
-    "ignoreerrors": False,
-    "logtostderr": False,
     "geo_bypass": True,
+    "extractor_args": {"youtube": {"skip": ["dash", "hls"]}},
 }
 
 FFMPEG_OPTIONS = {
@@ -649,6 +648,23 @@ async def get_audio_source(query: str, volume: float = 0.5):
         title = info.get("title", "Unknown")
     source = discord.FFmpegPCMAudio(url, **FFMPEG_OPTIONS)
     return discord.PCMVolumeTransformer(source, volume=volume), title
+
+@bot.command(name="دخل")
+async def join_vc(ctx):
+    if not ctx.author.voice or ctx.author.voice.channel is None:
+        await ctx.send("❌ أنت مش في روم صوت!")
+        return
+    vc_channel = ctx.author.voice.channel
+    if vc_channel.id not in VOICE_CHANNEL_IDS:
+        await ctx.send("❌ هذا الروم مو مدعوم.")
+        return
+    vc = ctx.voice_client
+    if vc is None:
+        await vc_channel.connect()
+    else:
+        await vc.move_to(vc_channel)
+    await ctx.guild.me.edit(nick=vc_channel.name)
+    await ctx.send(f"✅ دخلت روم **{vc_channel.name}**")
 
 @bot.command(name="ص")
 async def play(ctx, *, query: str):
