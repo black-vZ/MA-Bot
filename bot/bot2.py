@@ -31,8 +31,8 @@ def save_config(data):
         json.dump(data, f)
 
 intents = discord.Intents.default()
-intents.members = True
-intents.message_content = True
+intents.members = False
+intents.message_content = False
 
 bot = commands.Bot(command_prefix="!!", intents=intents)
 
