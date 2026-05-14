@@ -430,6 +430,19 @@ async def send_ajr_message2():
     embed.set_footer(text="Server  •  أجر يومي")
     await channel.send(content=mention, embed=embed)
 
+VERIFIED_ROLE_ID = 1503683196011941908
+RS_FOREVER_ROLE_ID = 1482528735717494897
+
+@bot.event
+async def on_member_update(before: discord.Member, after: discord.Member):
+    verified_role = discord.utils.get(after.guild.roles, id=VERIFIED_ROLE_ID)
+    rs_forever_role = discord.utils.get(after.guild.roles, id=RS_FOREVER_ROLE_ID)
+    if verified_role is None or rs_forever_role is None:
+        return
+    if verified_role not in before.roles and verified_role in after.roles:
+        if rs_forever_role not in after.roles:
+            await after.add_roles(rs_forever_role, reason="تلقائي عند الـ Verify")
+
 @bot.event
 async def on_ready():
     bot.add_view(StartupMainView2())
