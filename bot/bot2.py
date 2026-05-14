@@ -15,6 +15,7 @@ CONFIG_FILE = "bot/config2.json"
 
 NOTIFICATION_ROLES = [
     (1482528743447728290, "Server Notice"),
+    (1482528742046961846, "Event Notice"),
     (1482528747616731208, "Giveaway Notice"),
     (1482528755950813374, "Live Notice"),
     (1482528749592252477, "Football Notice"),
@@ -113,6 +114,7 @@ INFO_PAGES = [
         "description": (
             "Stay updated by selecting your notification preferences:\n\n"
             "📢 **Server Notice** — Server announcements\n"
+            "🎉 **Event Notice** — Event alerts\n"
             "🎁 **Giveaway Notice** — Giveaway alerts\n"
             "🔴 **Live Notice** — Live stream alerts\n"
             "⚽ **Football Notice** — Football match notifications\n"
