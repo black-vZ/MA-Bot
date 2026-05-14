@@ -233,17 +233,14 @@ def get_roles_embed2(status: str = ""):
     embed.set_footer(text="Server Panel  •  Notifications")
     return embed
 
-class NotificationView2(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=300)
-        for role_id, role_name in NOTIFICATION_ROLES:
-            self.add_item(NotifButton2(role_id, role_name))
-        self.add_item(AddAllButton2())
-        self.add_item(RemoveAllButton2())
-
 class NotifButton2(discord.ui.Button):
-    def __init__(self, role_id: int, role_name: str):
-        super().__init__(label=role_name, style=discord.ButtonStyle.secondary)
+    def __init__(self, role_id: int, role_name: str, row: int):
+        super().__init__(
+            label=role_name,
+            style=discord.ButtonStyle.secondary,
+            custom_id=f"s2_notif_{role_id}",
+            row=row
+        )
         self.role_id = role_id
 
     async def callback(self, interaction: discord.Interaction):
@@ -266,7 +263,7 @@ class NotifButton2(discord.ui.Button):
 
 class AddAllButton2(discord.ui.Button):
     def __init__(self):
-        super().__init__(label="Add All", style=discord.ButtonStyle.success)
+        super().__init__(label="Add All", style=discord.ButtonStyle.success, custom_id="s2_notif_add_all", row=2)
 
     async def callback(self, interaction: discord.Interaction):
         roles = [interaction.guild.get_role(rid) for rid, _ in NOTIFICATION_ROLES]
@@ -278,7 +275,7 @@ class AddAllButton2(discord.ui.Button):
 
 class RemoveAllButton2(discord.ui.Button):
     def __init__(self):
-        super().__init__(label="Remove All", style=discord.ButtonStyle.danger)
+        super().__init__(label="Remove All", style=discord.ButtonStyle.danger, custom_id="s2_notif_remove_all", row=2)
 
     async def callback(self, interaction: discord.Interaction):
         roles = [interaction.guild.get_role(rid) for rid, _ in NOTIFICATION_ROLES]
@@ -287,6 +284,15 @@ class RemoveAllButton2(discord.ui.Button):
         await interaction.response.edit_message(
             embed=get_roles_embed2("— All notification roles removed."), view=self.view
         )
+
+class NotificationView2(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        for i, (role_id, role_name) in enumerate(NOTIFICATION_ROLES):
+            row = 0 if i < 4 else 1
+            self.add_item(NotifButton2(role_id, role_name, row=row))
+        self.add_item(AddAllButton2())
+        self.add_item(RemoveAllButton2())
 
 class ApplyTypeView2(discord.ui.View):
     def __init__(self):
@@ -450,6 +456,7 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 @bot.event
 async def on_ready():
     bot.add_view(StartupMainView2())
+    bot.add_view(NotificationView2())
     guild = discord.Object(id=GUILD_ID)
     bot.tree.copy_global_to(guild=guild)
     await bot.tree.sync(guild=guild)
