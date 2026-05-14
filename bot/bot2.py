@@ -15,12 +15,12 @@ CONFIG_FILE = "bot/config2.json"
 
 NOTIFICATION_ROLES = [
     (1482528743447728290, "Server Notice"),
-    (1482528742046961846, "Event Notice"),
     (1482528747616731208, "Giveaway Notice"),
-    (1482528755950813374, "Live Notice"),
-    (1482528749592252477, "Football Notice"),
-    (1482528745066594345, "Games Notice"),
+    (1482528742046961846, "Event Notice"),
     (1482528752499167252, "Ajr Notice"),
+    (1482528745066594345, "Games Notice"),
+    (1482528749592252477, "Football Notice"),
+    (1482528755950813374, "Live Notice"),
 ]
 
 def load_config():
@@ -114,12 +114,12 @@ INFO_PAGES = [
         "description": (
             "Stay updated by selecting your notification preferences:\n\n"
             "📢 **Server Notice** — Server announcements\n"
-            "🎉 **Event Notice** — Event alerts\n"
             "🎁 **Giveaway Notice** — Giveaway alerts\n"
-            "🔴 **Live Notice** — Live stream alerts\n"
-            "⚽ **Football Notice** — Football match notifications\n"
+            "🎉 **Event Notice** — Event alerts\n"
+            "✨ **Ajr Notice** — Daily religious messages\n"
             "🎮 **Games Notice** — Gaming session alerts\n"
-            "✨ **Ajr Notice** — Daily religious messages\n\n"
+            "⚽ **Football Notice** — Football match notifications\n"
+            "🔴 **Live Notice** — Live stream alerts\n\n"
             "Use the **Notifications** button on the main panel to manage your roles."
         )
     },
