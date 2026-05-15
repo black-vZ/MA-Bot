@@ -4,6 +4,7 @@ from discord.ext import commands, tasks
 import os
 import json
 import random
+import asyncio
 
 TOKEN = os.environ.get('BOT2_TOKEN')
 GUILD_ID = 1173688498822332568
@@ -426,6 +427,23 @@ def next_ticket_number():
 def get_ticket_panel_channel_id():
     return load_config().get("ticket_channel2")
 
+def add_active_ticket(user_id: int, channel_id: int):
+    config = load_config()
+    tickets = config.get("active_tickets", {})
+    tickets[str(user_id)] = channel_id
+    config["active_tickets"] = tickets
+    save_config(config)
+
+def remove_active_ticket(channel_id: int):
+    config = load_config()
+    tickets = config.get("active_tickets", {})
+    config["active_tickets"] = {k: v for k, v in tickets.items() if v != channel_id}
+    save_config(config)
+
+def get_active_ticket(user_id: int):
+    tickets = load_config().get("active_tickets", {})
+    return tickets.get(str(user_id))
+
 def get_ticket_info_embed2():
     embed = discord.Embed(title="هل انت متاكد من فتح التذكرة ؟", color=MA_COLOR)
     embed.add_field(
@@ -441,6 +459,8 @@ def get_ticket_info_embed2():
     )
     return embed
 
+TICKET_GIF_URL = "https://i.imgur.com/sjKKtOX.gif"
+
 def get_ticket_panel_embed2():
     embed = discord.Embed(
         title="Ticket System",
@@ -450,6 +470,7 @@ def get_ticket_panel_embed2():
         ),
         color=MA_COLOR
     )
+    embed.set_image(url=TICKET_GIF_URL)
     embed.set_footer(text="RS System  •  Ticket System")
     return embed
 
@@ -469,6 +490,16 @@ class TicketModal2(discord.ui.Modal, title="Open a Ticket"):
 
     async def on_submit(self, interaction: discord.Interaction):
         await interaction.response.defer(ephemeral=True)
+        existing_id = get_active_ticket(interaction.user.id)
+        if existing_id:
+            existing_ch = interaction.guild.get_channel(existing_id)
+            if existing_ch:
+                await interaction.followup.send(
+                    f"❌ عندك تيكت مفتوح بالفعل! {existing_ch.mention}", ephemeral=True
+                )
+                return
+            else:
+                remove_active_ticket(existing_id)
         guild = interaction.guild
         cfg = TICKET_TYPE_CONFIG2[self.ticket_type]
         num = next_ticket_number()
@@ -520,6 +551,7 @@ class TicketModal2(discord.ui.Modal, title="Open a Ticket"):
 
         mentions = interaction.user.mention + (f" {role.mention}" if role else "")
         await ticket_channel.send(content=mentions, embed=embed, view=TicketControlView2())
+        add_active_ticket(interaction.user.id, ticket_channel.id)
         await interaction.followup.send(f"✅ تم فتح تذكرتك! {ticket_channel.mention}", ephemeral=True)
 
 class TicketTypeSelect2(discord.ui.Select):
@@ -547,8 +579,10 @@ class ConfirmCloseView2(discord.ui.View):
     @discord.ui.button(label="Confirm Close", style=discord.ButtonStyle.danger, custom_id="s2_ticket_confirm_close")
     async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.response.edit_message(
-            embed=discord.Embed(description="🔒 جاري إغلاق التذكرة...", color=MA_COLOR), view=None
+            embed=discord.Embed(description="🔒 سيتم إغلاق التذكرة خلال 5 ثواني...", color=MA_COLOR), view=None
         )
+        remove_active_ticket(interaction.channel.id)
+        await asyncio.sleep(5)
         await interaction.channel.delete(reason=f"Ticket closed by {interaction.user}")
 
     @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary, custom_id="s2_ticket_cancel_close")
@@ -563,7 +597,9 @@ class TicketOptionsView2(discord.ui.View):
 
     @discord.ui.button(label="Delete Ticket", style=discord.ButtonStyle.danger, custom_id="s2_ticket_delete")
     async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.send_message("🗑️ جاري حذف التذكرة...", ephemeral=True)
+        await interaction.response.send_message("🗑️ سيتم حذف التذكرة خلال 5 ثواني...", ephemeral=False)
+        remove_active_ticket(interaction.channel.id)
+        await asyncio.sleep(5)
         await interaction.channel.delete(reason=f"Ticket deleted by {interaction.user}")
 
 class TicketControlView2(discord.ui.View):
