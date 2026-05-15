@@ -399,6 +399,219 @@ class StartupMainView2(discord.ui.View):
         await interaction.response.send_message(embed=embed, view=ApplyTypeView2(), ephemeral=True)
 
 # ─────────────────────────────────────────
+#        TICKET SYSTEM
+# ─────────────────────────────────────────
+
+STAFF_ROLE_ID2    = 1503071852782682133
+EVENT_ROLE_ID2    = 1503073635169206404
+MGMT_ROLE_ID2     = 1503072777077522642
+
+TICKET_TYPE_CONFIG2 = {
+    "support":       {"label": "Support Ticket",       "role_id": STAFF_ROLE_ID2, "emoji": "🎫"},
+    "event":         {"label": "Event Ticket",         "role_id": EVENT_ROLE_ID2, "emoji": "🎉"},
+    "administrator": {"label": "Administrator Ticket", "role_id": MGMT_ROLE_ID2,  "emoji": "⚙️"},
+    "report":        {"label": "Report Ticket",        "role_id": STAFF_ROLE_ID2, "emoji": "📋"},
+}
+
+def get_ticket_count():
+    return load_config().get("ticket_count", 0)
+
+def next_ticket_number():
+    config = load_config()
+    count = config.get("ticket_count", 0) + 1
+    config["ticket_count"] = count
+    save_config(config)
+    return count
+
+def get_ticket_panel_channel_id():
+    return load_config().get("ticket_channel2")
+
+def get_ticket_info_embed2():
+    embed = discord.Embed(title="هل انت متاكد من فتح التذكرة ؟", color=MA_COLOR)
+    embed.add_field(
+        name="في حال الموافقة",
+        value=(
+            "● المحتوى الموجود داخل التذكرة غير قابل للنشر، وأيضاً لا يسمح بفتح شير وتجعل أحد يراها، "
+            "وأيضاً لا يسمح بـ عمل نسخة أو لقطات شاشة، عقوبتها الباند من سيرفر بشكل نهائي.\n\n"
+            "● لا يحق لك الاعتراض على اي قرار يتم اتخاذه بحقك اثناء استخدام التكت، سواء أكان معك أم كان ضدك.\n\n"
+            "● التكت ستكون محفوظة لأي أجراء سيتم مراجعته أو إتخاذه في المستقبل ويحق للأدارة العليا "
+            "مراجعتها او استخدامها كدليل ضدك في المستقبل في حال عدم احترامك اثناء التحدث مع الأدارة."
+        ),
+        inline=False
+    )
+    return embed
+
+def get_ticket_panel_embed2():
+    embed = discord.Embed(
+        title="Ticket System",
+        description=(
+            "Welcome to the ticket system, here you can open a ticket and get help from the staff team.\n"
+            "*Please read the rules before opening a ticket.*"
+        ),
+        color=MA_COLOR
+    )
+    embed.set_footer(text="RS System  •  Ticket System")
+    return embed
+
+class TicketModal2(discord.ui.Modal, title="Open a Ticket"):
+    reason = discord.ui.TextInput(
+        label="Reason for opening this ticket",
+        placeholder="Please describe your issue in detail...",
+        required=True,
+        min_length=10,
+        max_length=1000,
+        style=discord.TextStyle.paragraph
+    )
+
+    def __init__(self, ticket_type: str):
+        super().__init__()
+        self.ticket_type = ticket_type
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+        guild = interaction.guild
+        cfg = TICKET_TYPE_CONFIG2[self.ticket_type]
+        num = next_ticket_number()
+        ticket_name = f"ticket-{num:04d}"
+
+        panel_ch_id = get_ticket_panel_channel_id()
+        category = None
+        if panel_ch_id:
+            panel_ch = guild.get_channel(panel_ch_id)
+            if panel_ch and panel_ch.category:
+                category = panel_ch.category
+
+        overwrites = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False),
+            interaction.user: discord.PermissionOverwrite(
+                view_channel=True, send_messages=True,
+                read_message_history=True, attach_files=True
+            ),
+        }
+        role = guild.get_role(cfg["role_id"])
+        if role:
+            overwrites[role] = discord.PermissionOverwrite(
+                view_channel=True, send_messages=True,
+                read_message_history=True, manage_messages=True
+            )
+        if self.ticket_type == "administrator":
+            admin_role = guild.get_role(ADMIN_ROLE_ID)
+            if admin_role:
+                overwrites[admin_role] = discord.PermissionOverwrite(
+                    view_channel=True, send_messages=True,
+                    read_message_history=True, manage_messages=True
+                )
+
+        ticket_channel = await guild.create_text_channel(
+            name=ticket_name, category=category, overwrites=overwrites,
+            topic=f"{cfg['label']} | {interaction.user.id} | #{num:04d}"
+        )
+
+        embed = discord.Embed(
+            title=f"{cfg['emoji']} Ticket Created — {cfg['label']}",
+            description="Please wait for the staff to assist you.\nTo save time, please describe your issue clearly.",
+            color=MA_COLOR
+        )
+        embed.add_field(name="Opened By", value=interaction.user.mention, inline=True)
+        embed.add_field(name="Type",      value=cfg["label"],             inline=True)
+        embed.add_field(name="Ticket #",  value=f"{num:04d}",             inline=True)
+        embed.add_field(name="Reason",    value=self.reason.value,        inline=False)
+        embed.set_footer(text="RS System  •  Ticket System")
+
+        mentions = interaction.user.mention + (f" {role.mention}" if role else "")
+        await ticket_channel.send(content=mentions, embed=embed, view=TicketControlView2())
+        await interaction.followup.send(f"✅ تم فتح تذكرتك! {ticket_channel.mention}", ephemeral=True)
+
+class TicketTypeSelect2(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(label="Support Ticket",       value="support",       description="Open a ticket for support.",                    emoji="🎫"),
+            discord.SelectOption(label="Event Ticket",         value="event",         description="Open a ticket for event support.",               emoji="🎉"),
+            discord.SelectOption(label="Administrator Ticket", value="administrator", description="Open a ticket to speak to an administrator.",    emoji="⚙️"),
+            discord.SelectOption(label="Report Ticket",        value="report",        description="Open a ticket to report someone.",               emoji="📋"),
+        ]
+        super().__init__(placeholder="Please select a type to open a ticket.", options=options, custom_id="s2_ticket_select")
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.send_modal(TicketModal2(self.values[0]))
+
+class TicketSelectView2(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=120)
+        self.add_item(TicketTypeSelect2())
+
+class ConfirmCloseView2(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=60)
+
+    @discord.ui.button(label="Confirm Close", style=discord.ButtonStyle.danger, custom_id="s2_ticket_confirm_close")
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(
+            embed=discord.Embed(description="🔒 جاري إغلاق التذكرة...", color=MA_COLOR), view=None
+        )
+        await interaction.channel.delete(reason=f"Ticket closed by {interaction.user}")
+
+    @discord.ui.button(label="Cancel", style=discord.ButtonStyle.secondary, custom_id="s2_ticket_cancel_close")
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(
+            embed=discord.Embed(description="❌ تم إلغاء الإغلاق.", color=MA_COLOR), view=None
+        )
+
+class TicketOptionsView2(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=60)
+
+    @discord.ui.button(label="Delete Ticket", style=discord.ButtonStyle.danger, custom_id="s2_ticket_delete")
+    async def delete(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message("🗑️ جاري حذف التذكرة...", ephemeral=True)
+        await interaction.channel.delete(reason=f"Ticket deleted by {interaction.user}")
+
+class TicketControlView2(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Close", style=discord.ButtonStyle.danger, emoji="🔒", custom_id="s2_ticket_close")
+    async def close_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title="🔒 Close Ticket",
+            description=f"Are you sure you want to close this ticket?\nRequested by {interaction.user.mention}",
+            color=MA_COLOR
+        )
+        await interaction.response.send_message(embed=embed, view=ConfirmCloseView2())
+
+    @discord.ui.button(label="Claim", style=discord.ButtonStyle.primary, emoji="🤚", custom_id="s2_ticket_claim")
+    async def claim_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        role_ids = [r.id for r in interaction.user.roles]
+        if STAFF_ROLE_ID2 not in role_ids and MGMT_ROLE_ID2 not in role_ids and ADMIN_ROLE_ID not in role_ids and EVENT_ROLE_ID2 not in role_ids:
+            await interaction.response.send_message("❌ ما عندك صلاحية!", ephemeral=True)
+            return
+        embed = discord.Embed(description=f"✅ تم استلام التذكرة بواسطة {interaction.user.mention}", color=MA_COLOR)
+        await interaction.response.send_message(embed=embed)
+
+    @discord.ui.button(label="Options", style=discord.ButtonStyle.secondary, emoji="⚙️", custom_id="s2_ticket_options")
+    async def options_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        role_ids = [r.id for r in interaction.user.roles]
+        if STAFF_ROLE_ID2 not in role_ids and MGMT_ROLE_ID2 not in role_ids and ADMIN_ROLE_ID not in role_ids:
+            await interaction.response.send_message("❌ ما عندك صلاحية!", ephemeral=True)
+            return
+        embed = discord.Embed(title="⚙️ Ticket Options", color=MA_COLOR)
+        embed.add_field(name="Delete Ticket", value="This will permanently delete the ticket channel.", inline=False)
+        await interaction.response.send_message(embed=embed, view=TicketOptionsView2(), ephemeral=True)
+
+class TicketPanelView2(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Open Ticket", style=discord.ButtonStyle.success, custom_id="s2_open_ticket")
+    async def open_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = get_ticket_panel_embed2()
+        await interaction.response.send_message(embed=embed, view=TicketSelectView2(), ephemeral=True)
+
+    @discord.ui.button(label="Some Information", style=discord.ButtonStyle.secondary, custom_id="s2_ticket_info")
+    async def info_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(embed=get_ticket_info_embed2(), ephemeral=True)
+
+# ─────────────────────────────────────────
 #        BOT EVENTS & COMMANDS
 # ─────────────────────────────────────────
 
@@ -457,6 +670,8 @@ async def on_member_update(before: discord.Member, after: discord.Member):
 async def on_ready():
     bot.add_view(StartupMainView2())
     bot.add_view(NotificationView2())
+    bot.add_view(TicketPanelView2())
+    bot.add_view(TicketControlView2())
     guild = discord.Object(id=GUILD_ID)
     bot.tree.copy_global_to(guild=guild)
     await bot.tree.sync(guild=guild)
@@ -473,6 +688,16 @@ async def setup_startup2(interaction: discord.Interaction):
         return
     await channel.send(embed=get_main_embed2(), view=StartupMainView2())
     await interaction.response.send_message("✅ تم إرسال لوحة ستارت اب!", ephemeral=True)
+
+@bot.tree.command(name="setup_tickets2", description="إرسال بانل نظام التيكت")
+@app_commands.describe(channel="الروم الذي تريد إرسال بانل التيكت إليه")
+@is_admin()
+async def setup_tickets2(interaction: discord.Interaction, channel: discord.TextChannel):
+    config = load_config()
+    config["ticket_channel2"] = channel.id
+    save_config(config)
+    await channel.send(embed=get_ticket_panel_embed2(), view=TicketPanelView2())
+    await interaction.response.send_message(f"✅ تم إرسال بانل التيكت في {channel.mention}!", ephemeral=True)
 
 @bot.tree.command(name="setapps2", description="تعيين روم استقبال التقديمات")
 @app_commands.describe(channel="الروم الذي تريد إرسال التقديمات إليه")
