@@ -459,7 +459,7 @@ def get_ticket_info_embed2():
     )
     return embed
 
-TICKET_GIF_URL = "https://i.imgur.com/sjKKtOX.gif"
+TICKET_GIF_URL = "https://i.imgur.com/HeMem3U.gif"
 
 def get_ticket_panel_embed2():
     embed = discord.Embed(
