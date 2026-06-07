@@ -711,7 +711,7 @@ async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
         async with session.get(avatar_url) as resp:
             av_bytes = await resp.read()
 
-    av_size = 88
+    av_size = 100
     av = Image.open(io.BytesIO(av_bytes)).convert("RGBA").resize((av_size, av_size))
 
     # Circular crop
@@ -721,8 +721,8 @@ async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
     av_circle.paste(av, mask=mask)
 
     # Paste avatar — centered inside blue ring circle (center ≈ 65,75)
-    av_x = 21
-    av_y = 31
+    av_x = 15
+    av_y = 25
     bg.paste(av_circle, (av_x, av_y), av_circle)
 
     buf = io.BytesIO()
