@@ -720,9 +720,9 @@ async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
     av_circle = Image.new("RGBA", (av_size, av_size), (0, 0, 0, 0))
     av_circle.paste(av, mask=mask)
 
-    # Paste avatar — left-center of the dark area
+    # Paste avatar — inside the black circle (surrounded by blue ring, top-left)
     av_x = 20
-    av_y = (h - av_size) // 2          # vertically centered ≈ 85
+    av_y = 10                           # top of image, inside blue ring circle
     bg.paste(av_circle, (av_x, av_y), av_circle)
 
     buf = io.BytesIO()
