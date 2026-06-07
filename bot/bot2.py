@@ -745,7 +745,7 @@ async def on_member_join(member: discord.Member):
 
     welcome_text = (
         f"**❖  Welcome To : RS Community\n"
-        f"❖ Name : {member.mention} {member.display_name}\n"
+        f"❖ Name : {member.mention}\n"
         f"❖ You Are Now A Whitelisted Number : {member_count}\n"
         f"❖ Have A Great Time.**"
     )
