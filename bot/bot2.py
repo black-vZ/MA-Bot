@@ -689,8 +689,76 @@ async def send_ajr_message2():
     embed.set_footer(text="Server  •  أجر يومي")
     await channel.send(content=mention, embed=embed)
 
-VERIFIED_ROLE_ID = 1503683196011941908
+VERIFIED_ROLE_ID   = 1503683196011941908
 RS_FOREVER_ROLE_ID = 1482528735717494897
+
+# ─────────────────────────────────────────
+#        WELCOME SYSTEM
+# ─────────────────────────────────────────
+
+WELCOME_BG_PATH = "bot/assets/welcome_bg.png"
+
+async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
+    import aiohttp, io
+    from PIL import Image, ImageDraw
+
+    bg = Image.open(WELCOME_BG_PATH).convert("RGBA")
+    w, h = bg.size                     # 500 x 281
+
+    # Download member avatar
+    avatar_url = str(member.display_avatar.with_size(256).url)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(avatar_url) as resp:
+            av_bytes = await resp.read()
+
+    av_size = 110
+    av = Image.open(io.BytesIO(av_bytes)).convert("RGBA").resize((av_size, av_size))
+
+    # Circular crop
+    mask = Image.new("L", (av_size, av_size), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, av_size, av_size), fill=255)
+    av_circle = Image.new("RGBA", (av_size, av_size), (0, 0, 0, 0))
+    av_circle.paste(av, mask=mask)
+
+    # Paste avatar — left-center of the dark area
+    av_x = 20
+    av_y = (h - av_size) // 2          # vertically centered ≈ 85
+    bg.paste(av_circle, (av_x, av_y), av_circle)
+
+    buf = io.BytesIO()
+    bg.save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+@bot.event
+async def on_member_join(member: discord.Member):
+    import io
+    config = load_config()
+    channel_id = config.get("welcome_channel2")
+    if not channel_id:
+        return
+    channel = bot.get_channel(channel_id)
+    if not channel:
+        return
+
+    member_count = member.guild.member_count
+
+    welcome_text = (
+        f"**❖  Welcome To : RS Community\n"
+        f"❖ Name : {member.mention} {member.display_name}\n"
+        f"❖ You Are Now A Whitelisted Number : {member_count}\n"
+        f"❖ Have A Great Time.**"
+    )
+
+    try:
+        img_buf = await create_welcome_image(member)
+        await channel.send(
+            content=welcome_text,
+            file=discord.File(img_buf, filename="welcome.png")
+        )
+    except Exception as e:
+        await channel.send(content=welcome_text)
+        print(f"Welcome image error: {e}")
 
 @bot.event
 async def on_member_update(before: discord.Member, after: discord.Member):
@@ -724,6 +792,17 @@ async def setup_startup2(interaction: discord.Interaction):
         return
     await channel.send(embed=get_main_embed2(), view=StartupMainView2())
     await interaction.response.send_message("✅ تم إرسال لوحة ستارت اب!", ephemeral=True)
+
+@bot.tree.command(name="setup_welcome2", description="تعيين روم الترحيب بالأعضاء الجدد")
+@app_commands.describe(channel="الروم الذي تريد إرسال الترحيب فيه")
+@is_admin()
+async def setup_welcome2(interaction: discord.Interaction, channel: discord.TextChannel):
+    config = load_config()
+    config["welcome_channel2"] = channel.id
+    save_config(config)
+    await interaction.response.send_message(
+        f"✅ تم تعيين روم الترحيب إلى {channel.mention}!", ephemeral=True
+    )
 
 @bot.tree.command(name="setup_tickets2", description="إرسال بانل نظام التيكت")
 @app_commands.describe(channel="الروم الذي تريد إرسال بانل التيكت إليه")
