@@ -720,11 +720,19 @@ async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
     av_circle = Image.new("RGBA", (av_size, av_size), (0, 0, 0, 0))
     av_circle.paste(av, mask=mask)
 
-    # Paste avatar on the original 500x281 canvas
-    # Center target: (75, 55) → av_x=75-55=20, av_y=55-55=0
-    av_x = 20
-    av_y = 0
-    bg.paste(av_circle, (av_x, av_y), av_circle)
+    # Build blue ring + avatar composite
+    ring_w = 5
+    outer = av_size + ring_w * 2
+    ring_img = Image.new("RGBA", (outer, outer), (0, 0, 0, 0))
+    rd = ImageDraw.Draw(ring_img)
+    rd.ellipse((0, 0, outer - 1, outer - 1), fill=(30, 120, 220, 255))
+    rd.ellipse((ring_w, ring_w, outer - ring_w - 1, outer - ring_w - 1), fill=(0, 0, 0, 0))
+    ring_img.paste(av_circle, (ring_w, ring_w), av_circle)
+
+    # Center on background ring area (~65, 65)
+    rx = 65 - outer // 2
+    ry = 65 - outer // 2
+    bg.paste(ring_img, (rx, ry), ring_img)
 
     buf = io.BytesIO()
     bg.convert("RGB").save(buf, format="PNG")
