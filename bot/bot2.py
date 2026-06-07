@@ -721,7 +721,7 @@ async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
     av_circle.paste(av, mask=mask)
 
     # Paste avatar — centered inside blue ring circle
-    av_x = 22
+    av_x = 28
     av_y = 20
     bg.paste(av_circle, (av_x, av_y), av_circle)
 
