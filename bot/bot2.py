@@ -720,14 +720,14 @@ async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
     av_circle = Image.new("RGBA", (av_size, av_size), (0, 0, 0, 0))
     av_circle.paste(av, mask=mask)
 
-    # Create taller canvas so avatar floats above the card (ProBot style)
-    top_pad = 30
-    canvas = Image.new("RGBA", (w, h + top_pad), (0, 0, 0, 0))
-    canvas.paste(bg, (0, top_pad))          # background starts 30px down
-    canvas.paste(av_circle, (8, 5), av_circle)   # avatar sticks 25px above card
+    # Paste avatar on the original 500x281 canvas
+    # Center target: (75, 55) → av_x=75-55=20, av_y=55-55=0
+    av_x = 20
+    av_y = 0
+    bg.paste(av_circle, (av_x, av_y), av_circle)
 
     buf = io.BytesIO()
-    canvas.convert("RGB").save(buf, format="PNG")
+    bg.convert("RGB").save(buf, format="PNG")
     buf.seek(0)
     return buf
 
