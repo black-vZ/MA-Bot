@@ -752,10 +752,8 @@ async def on_member_join(member: discord.Member):
 
     try:
         img_buf = await create_welcome_image(member)
-        await channel.send(
-            content=welcome_text,
-            file=discord.File(img_buf, filename="welcome.png")
-        )
+        await channel.send(file=discord.File(img_buf, filename="welcome.png"))
+        await channel.send(content=welcome_text)
     except Exception as e:
         await channel.send(content=welcome_text)
         print(f"Welcome image error: {e}")
