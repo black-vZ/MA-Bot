@@ -710,10 +710,10 @@ async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
         async with session.get(avatar_url) as resp:
             av_bytes = await resp.read()
 
-    # Image is 1024x576; ring center at (140,160), inner radius ~100
-    av_size = 200
-    av_x = 40   # 140 - 100
-    av_y = 60   # 160 - 100
+    # Background 500x281; dark inner circle: center=(85,84), av_size=138
+    av_size = 138
+    av_x = 16   # 85 - 69
+    av_y = 15   # 84 - 69
 
     av = Image.open(io.BytesIO(av_bytes)).convert("RGBA").resize((av_size, av_size))
 
