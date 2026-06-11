@@ -698,57 +698,64 @@ RS_FOREVER_ROLE_ID = 1482528735717494897
 
 WELCOME_BG_PATH = "bot/assets/welcome_bg.png"
 
-# ============================================================
-# OLD WELCOME CODE — معطّل مؤقتاً، ينتظر إحداثيات جديدة
-# ============================================================
-# async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
-#     import aiohttp, io
-#     from PIL import Image, ImageDraw
-#     bg = Image.open(WELCOME_BG_PATH).convert("RGBA")
-#     avatar_url = str(member.display_avatar.with_size(256).url)
-#     async with aiohttp.ClientSession() as session:
-#         async with session.get(avatar_url) as resp:
-#             av_bytes = await resp.read()
-#     av_size = 100
-#     av = Image.open(io.BytesIO(av_bytes)).convert("RGBA").resize((av_size, av_size))
-#     mask = Image.new("L", (av_size, av_size), 0)
-#     ImageDraw.Draw(mask).ellipse((0, 0, av_size, av_size), fill=255)
-#     av_circle = Image.new("RGBA", (av_size, av_size), (0, 0, 0, 0))
-#     av_circle.paste(av, mask=mask)
-#     av_x, av_y = 46, 38
-#     bg.paste(av_circle, (av_x, av_y), av_circle)
-#     buf = io.BytesIO()
-#     bg.convert("RGB").save(buf, format="PNG")
-#     buf.seek(0)
-#     return buf
+async def create_welcome_image(member: discord.Member) -> "io.BytesIO":
+    import aiohttp, io
+    from PIL import Image, ImageDraw
 
-# @bot.event
-# async def on_member_join(member: discord.Member):
-#     import io
-#     config = load_config()
-#     channel_id = config.get("welcome_channel2")
-#     if not channel_id:
-#         return
-#     channel = bot.get_channel(channel_id)
-#     if not channel:
-#         return
-#     member_count = member.guild.member_count
-#     welcome_text = (
-#         f"**❖  Welcome To : RS Community\n"
-#         f"❖ Name : {member.mention}\n"
-#         f"❖ You Are Now A Whitelisted Number : {member_count}\n"
-#         f"❖ Have A Great Time.**"
-#     )
-#     try:
-#         img_buf = await create_welcome_image(member)
-#         await channel.send(file=discord.File(img_buf, filename="welcome.png"))
-#         await channel.send(content=welcome_text)
-#     except Exception as e:
-#         await channel.send(content=welcome_text)
-#         print(f"Welcome image error: {e}")
-# ============================================================
-# NEW WELCOME — سيُفعَّل بعد استلام الإحداثيات الصحيحة
-# ============================================================
+    bg = Image.open(WELCOME_BG_PATH).convert("RGBA")
+
+    # Download member avatar
+    avatar_url = str(member.display_avatar.with_size(256).url)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(avatar_url) as resp:
+            av_bytes = await resp.read()
+
+    # Image is 1024x576; ring center at (140,160), inner radius ~100
+    av_size = 200
+    av_x = 40   # 140 - 100
+    av_y = 60   # 160 - 100
+
+    av = Image.open(io.BytesIO(av_bytes)).convert("RGBA").resize((av_size, av_size))
+
+    # Circular crop
+    mask = Image.new("L", (av_size, av_size), 0)
+    ImageDraw.Draw(mask).ellipse((0, 0, av_size, av_size), fill=255)
+    av_circle = Image.new("RGBA", (av_size, av_size), (0, 0, 0, 0))
+    av_circle.paste(av, mask=mask)
+
+    bg.paste(av_circle, (av_x, av_y), av_circle)
+
+    buf = io.BytesIO()
+    bg.convert("RGB").save(buf, format="PNG")
+    buf.seek(0)
+    return buf
+
+@bot.event
+async def on_member_join(member: discord.Member):
+    import io
+    config = load_config()
+    channel_id = config.get("welcome_channel2")
+    if not channel_id:
+        return
+    channel = bot.get_channel(channel_id)
+    if not channel:
+        return
+
+    member_count = member.guild.member_count
+    welcome_text = (
+        f"**❖  Welcome To : RS Community\n"
+        f"❖ Name : {member.mention}\n"
+        f"❖ You Are Now A Whitelisted Number : {member_count}\n"
+        f"❖ Have A Great Time.**"
+    )
+
+    try:
+        img_buf = await create_welcome_image(member)
+        await channel.send(file=discord.File(img_buf, filename="welcome.png"))
+        await channel.send(content=welcome_text)
+    except Exception as e:
+        await channel.send(content=welcome_text)
+        print(f"Welcome image error: {e}")
 
 @bot.event
 async def on_member_update(before: discord.Member, after: discord.Member):
