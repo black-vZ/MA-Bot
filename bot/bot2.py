@@ -822,4 +822,45 @@ async def setapps2(interaction: discord.Interaction, channel: discord.TextChanne
         f"✅ تم تعيين روم التقديمات إلى {channel.mention}!", ephemeral=True
     )
 
+# ─────────────────────────────────────────
+#        VOICE SYSTEM
+# ─────────────────────────────────────────
+
+@bot.tree.command(name="join", description="يدخل البوت روم الصوت (صامت كلياً)")
+@app_commands.describe(channel="روم الصوت (اتركه فارغاً ليدخل رومك)")
+@is_admin()
+async def join_vc(interaction: discord.Interaction, channel: discord.VoiceChannel = None):
+    await interaction.response.defer(ephemeral=True)
+
+    # Use member's current channel if none specified
+    if channel is None:
+        if interaction.user.voice and interaction.user.voice.channel:
+            channel = interaction.user.voice.channel
+        else:
+            await interaction.followup.send("❌ أنت مو في روم صوت، حدد الروم يدوياً.", ephemeral=True)
+            return
+
+    # Leave existing voice connection in this guild if any
+    existing = discord.utils.get(bot.voice_clients, guild=interaction.guild)
+    if existing:
+        await existing.disconnect(force=True)
+
+    # Join with mic muted + deafened (no audio in/out)
+    vc = await channel.connect(self_mute=True, self_deaf=True)
+    await interaction.followup.send(
+        f"✅ دخلت **{channel.name}** — المايك مقفل والدفن شغّال 🔇",
+        ephemeral=True
+    )
+
+@bot.tree.command(name="leave", description="يطلع البوت من روم الصوت")
+@is_admin()
+async def leave_vc(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=True)
+    vc = discord.utils.get(bot.voice_clients, guild=interaction.guild)
+    if vc:
+        await vc.disconnect(force=True)
+        await interaction.followup.send("✅ طلعت من روم الصوت.", ephemeral=True)
+    else:
+        await interaction.followup.send("❌ البوت مو في أي روم صوت.", ephemeral=True)
+
 bot.run(TOKEN)
